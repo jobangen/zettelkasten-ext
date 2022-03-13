@@ -864,6 +864,54 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   (zettelkasten-inbox-process))
 ;;; end:
 
+(defun zettelkasten-generate-entity-from-activity-at-point ()
+  (interactive)
+  (let* ((filename (buffer-file-name))
+         (element (org-element-parse-buffer))
+         (source-id (zettelkasten-get-property-or-keyword-upwards
+                     filename element "CUSTOM_ID"))
+         (source-type (zettelkasten-get-property-or-keyword-upwards
+                       filename element "RDF_TYPE"))
+         (type-choices (zettelkasten--tree-children-rec
+                        "prov:Entity" zettelkasten-classes)))
+    (if (member source-type (zettelkasten--tree-children-rec
+                             "prov:Activity" zettelkasten-classes))
+        (message "Zk: ressource is not an activity.")
+      (let ((type (completing-read "Type: " type-choices)))
+        (outline-next-heading)
+        (open-line 1)
+        (insert (concat "** " (read-string "Title: ")))
+        (zettelkasten-set-type-headline type)
+        (zettelkasten-id-get-create)
+        (zettelkasten-heading-set-relation-to-context
+         "prov:wasGeneratedBy" source-id)
+        (when (string= type "zkt:Task")
+          (org-todo "TODO")
+          (org-schedule))))))
+
+(defun zettelkasten-derive-task-from-entity-at-point ()
+  (interactive)
+  (let* ((filename (buffer-file-name))
+         (element (org-element-parse-buffer))
+         (source-id (zettelkasten-get-property-or-keyword-upwards
+                     filename element "CUSTOM_ID"))
+         (source-type (zettelkasten-get-property-or-keyword-upwards
+                       filename element "RDF_TYPE")))
+    (if (member source-type (zettelkasten--tree-children-rec
+                             "prov:Entity" zettelkasten-classes))
+        (message "Zk: ressource is not an entity.")
+      (outline-next-heading)
+      (open-line 1)
+      (insert (concat "** " (read-string "Title: ")))
+      (zettelkasten-set-type-headline type)
+      (zettelkasten-id-get-create)
+      (zettelkasten-heading-set-relation-to-context
+       "prov:wasDerivedFrom" source-id)
+      (org-todo "TODO")
+      (org-schedule)
+      (when (y-or-n-p "Link to activity?")
+        (zettelkasten-heading-set-relation-to-context
+         "prov:wasGeneratedBy")))))
 
 ;;; begin: hydra
 (defhydra hydra-zettelkasten (:color blue)
@@ -905,6 +953,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   ("hf" zettelkasten-headline-set-followup "Set followup")
   ("hr" zettelkasten-headline-reset "Reset")
   ("hz" zettelkasten-node-to-zettel "Zettel")
+  ("e" zettelkasten-generate-entity-from-activity-at-point "Entity generation")
+  ("t" zettelkasten-derive-task-from-entity-at-point "Task derivation")
 
   ("n" org-noter "noter" :column "Other")
   ("u" zettelkasten-update-org-agenda-files "Update agenda")
