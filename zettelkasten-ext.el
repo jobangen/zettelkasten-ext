@@ -872,10 +872,10 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                      filename element "CUSTOM_ID"))
          (source-type (zettelkasten-get-property-or-keyword-upwards
                        filename element "RDF_TYPE"))
-         (type-choices (zettelkasten--tree-children-rec
-                        "prov:Entity" zettelkasten-classes)))
-    (if (member source-type (zettelkasten--tree-children-rec
-                             "prov:Activity" zettelkasten-classes))
+         (type-choices (-flatten (zettelkasten--tree-children-rec
+                         "prov:Entity" zettelkasten-classes))))
+    (if (member source-type (-flatten (zettelkasten--tree-children-rec
+                              "prov:Activity" zettelkasten-classes)))
         (message "Zk: ressource is not an activity.")
       (let ((type (completing-read "Type: " type-choices)))
         (outline-next-heading)
@@ -900,8 +900,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                      filename element "CUSTOM_ID"))
          (source-type (zettelkasten-get-property-or-keyword-upwards
                        filename element "RDF_TYPE")))
-    (if (member source-type (zettelkasten--tree-children-rec
-                             "prov:Entity" zettelkasten-classes))
+    (if (member source-type (-flatten (zettelkasten--tree-children-rec
+                              "prov:Entity" zettelkasten-classes)))
         (message "Zk: ressource is not an entity.")
       (outline-next-heading)
       (open-line 1)
