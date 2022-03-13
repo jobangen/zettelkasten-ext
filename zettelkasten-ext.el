@@ -880,11 +880,14 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (let ((type (completing-read "Type: " type-choices)))
         (outline-next-heading)
         (open-line 1)
-        (insert (concat "** " (read-string "Title: ")))
+        (insert (concat "*** " (read-string "Title: ")))
         (zettelkasten-set-type-headline type)
         (zettelkasten-id-get-create)
         (zettelkasten-heading-set-relation-to-context
          "prov:wasGeneratedBy" source-id)
+        (org-set-property "GENERATED_AT_TIME"
+                          (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
+                                  (job/current-timezone-offset-hours)))
         (when (string= type "zkt:Task")
           (org-todo "TODO")
           (org-schedule))))))
@@ -902,11 +905,14 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
         (message "Zk: ressource is not an entity.")
       (outline-next-heading)
       (open-line 1)
-      (insert (concat "** " (read-string "Title: ")))
-      (zettelkasten-set-type-headline type)
+      (insert (concat "*** " (read-string "Title: ")))
+      (zettelkasten-set-type-headline "zkt:Task")
       (zettelkasten-id-get-create)
       (zettelkasten-heading-set-relation-to-context
        "prov:wasDerivedFrom" source-id)
+      (org-set-property "GENERATED_AT_TIME"
+                          (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
+                                  (job/current-timezone-offset-hours)))
       (org-todo "TODO")
       (org-schedule)
       (when (y-or-n-p "Link to activity?")
