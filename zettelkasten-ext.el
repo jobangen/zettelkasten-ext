@@ -901,7 +901,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
          (source-type (zettelkasten-get-property-or-keyword-upwards
                        filename element "RDF_TYPE")))
     (if (member source-type (-flatten (zettelkasten--tree-children-rec
-                              "prov:Entity" zettelkasten-classes)))
+                                       "prov:Entity" zettelkasten-classes)))
         (message "Zk: ressource is not an entity.")
       (outline-next-heading)
       (open-line 1)
@@ -911,10 +911,13 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (zettelkasten-heading-set-relation-to-context
        "prov:wasDerivedFrom" source-id)
       (org-set-property "GENERATED_AT_TIME"
-                          (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
-                                  (job/current-timezone-offset-hours)))
+                        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
+                                (job/current-timezone-offset-hours)))
       (org-todo "TODO")
-      (org-schedule)
+      (org-schedule nil "")
+      (when (y-or-n-p "Is this your taskk?")
+        (zettelkasten-heading-set-relation-to-context
+         "zkt:wasAdressat" "@me"))
       (when (y-or-n-p "Link to activity?")
         (zettelkasten-heading-set-relation-to-context
          "prov:wasGeneratedBy")))))
