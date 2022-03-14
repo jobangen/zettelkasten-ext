@@ -868,8 +868,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   (interactive)
   (let* ((filename (buffer-file-name))
          (element (org-element-parse-buffer))
-         (source-id (zettelkasten-get-property-or-keyword-upwards
-                     filename element "CUSTOM_ID"))
+         (source-id (car (zettelkasten-get-property-or-keyword-upwards
+                      filename element "CUSTOM_ID")))
          (source-type (zettelkasten-get-property-or-keyword-upwards
                        filename element "RDF_TYPE"))
          (type-choices (-flatten (zettelkasten--tree-children-rec
@@ -896,8 +896,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   (interactive)
   (let* ((filename (buffer-file-name))
          (element (org-element-parse-buffer))
-         (source-id (zettelkasten-get-property-or-keyword-upwards
-                     filename element "CUSTOM_ID"))
+         (source-id (car (zettelkasten-get-property-or-keyword-upwards
+                      filename element "CUSTOM_ID")))
          (source-type (zettelkasten-get-property-or-keyword-upwards
                        filename element "RDF_TYPE")))
     (if (member source-type (-flatten (zettelkasten--tree-children-rec
