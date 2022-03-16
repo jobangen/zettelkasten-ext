@@ -915,7 +915,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                                 (job/current-timezone-offset-hours)))
       (org-todo "TODO")
       (org-schedule nil "")
-      (when (y-or-n-p "Is this your taskk?")
+      (when (y-or-n-p "Is this your task?")
         (zettelkasten-heading-set-relation-to-context
          "zkt:wasAdressat" "@me"))
       (when (y-or-n-p "Link to activity?")
@@ -949,6 +949,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 
   ("c" zettelkasten-zettel-add-collection "Add collection" :column "Zettel")
   ("#" zettelkasten-zettel-add-descriptor "Add descriptor")
+  ("'" zettelkasten-zettel-add-descriptor "Add descriptor")
   ("x" zettelkasten-zettel-add-index "Add Index")
   ("i" zettelkasten-zettel-info "Info")
   ("v" zettelkasten-vis-buffer "Visualize")
@@ -956,7 +957,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   ("o" zettelkasten-zettel-open-external "Open external")
 
   ("hc" zettelkasten-headline-add-collection "Add collection" :column "Heading")
-  ("C-#" zettelkasten-headline-add-descriptor "Add descriptor")
+  ("C-'" zettelkasten-headline-add-descriptor "Add descriptor")
   ("r" zettelkasten-capture-refile "Refile")
   ("+" zettelkasten-heading-to-node "Node")
   ("hf" zettelkasten-headline-set-followup "Set followup")
