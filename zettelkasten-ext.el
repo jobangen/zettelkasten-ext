@@ -869,13 +869,15 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   (let* ((filename (buffer-file-name))
          (element (org-element-parse-buffer))
          (source-id (caar (zettelkasten-get-property-or-keyword-upwards
-                          filename element "CUSTOM_ID")))
+                           filename element "CUSTOM_ID")))
          (source-type (zettelkasten-get-property-or-keyword-upwards
                        filename element "RDF_TYPE"))
          (type-choices (-flatten (zettelkasten--tree-children-rec
-                         "prov:Entity" zettelkasten-classes))))
+                                  "prov:Entity" zettelkasten-classes)))
+         (org-fast-tag-selection-single-key nil))
+    
     (if (member source-type (-flatten (zettelkasten--tree-children-rec
-                              "prov:Activity" zettelkasten-classes)))
+                                        "prov:Activity" zettelkasten-classes)))
         (message "Zk: ressource is not an activity.")
       (let ((type (completing-read "Type: " type-choices)))
         (outline-next-heading)
@@ -888,26 +890,34 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
         (org-set-property "GENERATED_AT_TIME"
                           (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
                                   (job/current-timezone-offset-hours)))
+        (when (string= type "zkt:Mitschrift")
+          (zettelkasten-heading-set-relation-to-context "zkt:wasAuthoredBy" "@me"))
         (when (string= type "zkt:Task")
           (org-todo "TODO")
-          (org-schedule))))))
+          (zettelkasten-heading-set-relation-to-context
+           "zkt:wasAdressat" "@me")
+          (org-schedule))
+        (org-set-tags-command)))))
 
 (defun zettelkasten-derive-task-from-entity-at-point ()
   (interactive)
   (let* ((filename (buffer-file-name))
          (element (org-element-parse-buffer))
          (source-id (caar (zettelkasten-get-property-or-keyword-upwards
-                      filename element "CUSTOM_ID")))
+                           filename element "CUSTOM_ID")))
          (source-type (zettelkasten-get-property-or-keyword-upwards
-                       filename element "RDF_TYPE")))
-    (if (member source-type (-flatten (zettelkasten--tree-children-rec
-                                       "prov:Entity" zettelkasten-classes)))
+                       filename element "RDF_TYPE"))
+         (org-id-method 'ts)
+         (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
+         (org-fast-tag-selection-single-key nil))
+    (if (not (member "zkt:Task" (-flatten (zettelkasten--tree-children-rec
+                                           "prov:Entity" zettelkasten-classes))))
         (message "Zk: ressource is not an entity.")
       (outline-next-heading)
       (open-line 1)
       (insert (concat "*** " (read-string "Title: ")))
       (zettelkasten-set-type-headline "zkt:Task")
-      (zettelkasten-id-get-create)
+      (zettelkasten-id-get-create (org-id-new))
       (zettelkasten-heading-set-relation-to-context
        "prov:wasDerivedFrom" source-id)
       (org-set-property "GENERATED_AT_TIME"
@@ -915,12 +925,12 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                                 (job/current-timezone-offset-hours)))
       (org-todo "TODO")
       (org-schedule nil "")
-      (when (y-or-n-p "Is this your task?")
-        (zettelkasten-heading-set-relation-to-context
-         "zkt:wasAdressat" "@me"))
+      (zettelkasten-heading-set-relation-to-context
+       "zkt:wasAdressat" "@me")
       (when (y-or-n-p "Link to activity?")
         (zettelkasten-heading-set-relation-to-context
-         "prov:wasGeneratedBy")))))
+         "prov:wasGeneratedBy"))
+      (org-set-tags-command))))
 
 ;;; begin: hydra
 (defhydra hydra-zettelkasten (:color blue)
