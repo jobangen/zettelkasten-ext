@@ -875,9 +875,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
          (type-choices (-flatten (zettelkasten--tree-children-rec
                                   "prov:Entity" zettelkasten-classes)))
          (org-fast-tag-selection-single-key nil))
-    
     (if (member source-type (-flatten (zettelkasten--tree-children-rec
-                                        "prov:Activity" zettelkasten-classes)))
+                                       "prov:Activity" zettelkasten-classes)))
         (message "Zk: ressource is not an activity.")
       (let ((type (completing-read "Type: " type-choices)))
         (outline-next-heading)
@@ -896,7 +895,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
           (org-todo "TODO")
           (zettelkasten-heading-set-relation-to-context
            "zkt:wasAdressat" "@me")
-          (org-schedule))
+          (when (y-or-n-p "Schedule task?")
+            (org-schedule nil "")))
         (org-set-tags-command)))))
 
 (defun zettelkasten-derive-task-from-entity-at-point ()
@@ -924,7 +924,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                         (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
                                 (job/current-timezone-offset-hours)))
       (org-todo "TODO")
-      (org-schedule nil "")
+      (when (y-or-n-p "Schedule task?")
+            (org-schedule nil ""))
       (zettelkasten-heading-set-relation-to-context
        "zkt:wasAdressat" "@me")
       (when (y-or-n-p "Link to activity?")
