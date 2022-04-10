@@ -874,6 +874,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                        filename element "RDF_TYPE"))
          (type-choices (-flatten (zettelkasten--tree-children-rec
                                   "prov:Entity" zettelkasten-classes)))
+         (org-id-method 'ts)
+         (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
          (org-fast-tag-selection-single-key nil))
     (if (member source-type (-flatten (zettelkasten--tree-children-rec
                                        "prov:Activity" zettelkasten-classes)))
