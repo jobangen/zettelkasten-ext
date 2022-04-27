@@ -896,7 +896,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
         (when (string= type "zkt:Task")
           (org-todo "TODO")
           (zettelkasten-heading-set-relation-to-context
-           "zkt:wasAdressat" "@me")
+           "zkt:hadAdressat" "@me")
           (when (y-or-n-p "Schedule task?")
             (org-schedule nil "")))
         (org-set-tags-command)))))
@@ -929,7 +929,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (when (y-or-n-p "Schedule task?")
             (org-schedule nil ""))
       (zettelkasten-heading-set-relation-to-context
-       "zkt:wasAdressat" "@me")
+       "zkt:hadAdressat" "@me")
       (when (y-or-n-p "Link to activity?")
         (zettelkasten-heading-set-relation-to-context
          "prov:wasGeneratedBy"))
