@@ -913,9 +913,10 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
           (org-todo "TODO")
           (zettelkasten-heading-set-relation-to-context
            "zkt:hadAdressat" "@me")
-          (when (y-or-n-p "Schedule task?")
+          (when (y-or-n-p "Schedule task? ")
             (org-schedule nil "")))
-        (org-set-tags-command)))))
+        (org-set-tags-command)
+        (zettelkasten-headline-add-descriptor)))))
 
 (defun zettelkasten-derive-task-from-entity-at-point ()
   (interactive)
@@ -942,14 +943,15 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                         (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
                                 (job/current-timezone-offset-hours)))
       (org-todo "TODO")
-      (when (y-or-n-p "Schedule task?")
-            (org-schedule nil ""))
+      (when (y-or-n-p "Schedule task? ")
+        (org-schedule nil ""))
       (zettelkasten-heading-set-relation-to-context
        "zkt:hadAdressat" "@me")
-      (when (y-or-n-p "Link to activity?")
+      (when (y-or-n-p "Link to activity? ")
         (zettelkasten-heading-set-relation-to-context
          "prov:wasGeneratedBy"))
-      (org-set-tags-command))))
+      (org-set-tags-command)
+      (zettelkasten-headline-add-descriptor))))
 
 ;;; begin: hydra
 (defhydra hydra-zettelkasten (:color blue)
