@@ -373,6 +373,22 @@ Add row to capture db for feed."
     (dolist (year years)
       (zettelkasten-yearly-file year))))
 
+(defun zettelkasten-journal-daily-file ()
+  (interactive)
+  (let* ((filename (format-time-string "%Y-%m-%d.org"))
+         (filepath (concat org-journal-dir filename)))
+    (if (file-exists-p filepath)
+        (find-file filepath)
+      (org-journal-new-entry t)
+      (insert (format-time-string "\n:PROPERTIES:\n"))
+      (insert (format-time-string ":RDF_TYPE: time:DateTimeDescription\n"))
+      (insert (format-time-string ":CUSTOM_ID: dtd-%Y-%m-%d\n"))
+      (insert (format-time-string ":END:\n"))
+      (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:year::%Y][%Y]]-[[zk:dtd-%Y-%m-%d::time:month::%m][%m]]-[[zk:dtd-%Y-%m-%d::time:day::%d][%d]]\n"))
+      (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:week::%W][W%W]]\n"))
+      (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:week::%A][%A]]\n")))))
+
+
 ;;;###autoload
 (defun zettelkasten-journal-weekly-file ()
   (interactive)
@@ -944,8 +960,10 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   ("Æ" (zettelkasten-open-zettel t) "Open Nodes")
   ("R" zettelkasten-open-zettel-random "Open random")
   ("ä" zettelkasten-open-zettel-collection "Open collection")
+  ("æ" zettelkasten-open-zettel-collection "Open collection")
   ("d" zettelkasten-open-zettel-descriptor "Open descriptor")
   ("s" zettelkasten-open-semantic "Open semantic")
+  ("jd" zettelkasten-journal-daily-file "Weekly file")
   ("jw" zettelkasten-journal-weekly-file "Weekly file")
 
   ("C-r" zettelkasten-inbox-process (format "Process inbox [%s]" 5) :color red :column "Inbox")
