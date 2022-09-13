@@ -953,6 +953,40 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (org-set-tags-command)
       (zettelkasten-headline-add-descriptor))))
 
+(defun zettelkasten-ext-create-subtask ()
+  (interactive)
+  (let* ((filename (buffer-file-name))
+         (element (org-element-parse-buffer))
+         (source-id (caar (zettelkasten-get-property-or-keyword-upwards
+                           filename element "CUSTOM_ID")))
+         (source-type (zettelkasten-get-property-or-keyword-upwards
+                       filename element "RDF_TYPE"))
+         (org-id-method 'ts)
+         (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
+         (org-fast-tag-selection-single-key nil))
+    (if (not (member "zkt:Task" (car source-type)))
+        (message "Zk: ressource is not a zkt:Task.")
+      (outline-next-heading)
+      (open-line 1)
+      (insert (concat "*** " (read-string "Title: ")))
+      (zettelkasten-set-type-headline "zkt:Task")
+      (zettelkasten-id-get-create (org-id-new))
+      (zettelkasten-heading-set-relation-to-context
+       "dct:isPartOf" source-id)
+      (org-set-property "GENERATED_AT_TIME"
+                        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
+                                (job/current-timezone-offset-hours)))
+      (org-todo "TODO")
+      (zettelkasten-heading-set-relation-to-context
+       "zkt:hadAdressat" "@me")
+      (when (y-or-n-p "Link to activity? ")
+        (zettelkasten-heading-set-relation-to-context
+         "prov:wasGeneratedBy"))
+      (org-set-tags-command)
+      (zettelkasten-headline-add-descriptor))))
+
+
+
 ;;; begin: hydra
 (defhydra hydra-zettelkasten (:color blue)
   "Zettelkasten"
