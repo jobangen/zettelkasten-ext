@@ -930,7 +930,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
          (org-id-method 'ts)
          (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
          (org-fast-tag-selection-single-key nil))
-    (if (not (member "zkt:Task" (-flatten (zettelkasten--tree-children-rec
+    (if (not (member (caar source-type) (-flatten (zettelkasten--tree-children-rec
                                            "prov:Entity" zettelkasten-classes))))
         (message "Zk: ressource is not an entity.")
       (outline-next-heading)
