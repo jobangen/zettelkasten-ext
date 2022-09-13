@@ -893,8 +893,9 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
          (org-id-method 'ts)
          (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
          (org-fast-tag-selection-single-key nil))
-    (if (member source-type (-flatten (zettelkasten--tree-children-rec
-                                       "prov:Activity" zettelkasten-classes)))
+    (if (not (member (caar source-type)
+                     (-flatten (zettelkasten--tree-children-rec
+                                "prov:Activity" zettelkasten-classes))))
         (message "Zk: ressource is not an activity.")
       (let ((type (completing-read "Type: " type-choices)))
         (outline-next-heading)
