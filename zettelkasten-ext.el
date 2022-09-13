@@ -1182,5 +1182,23 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
      (setq zettelkasten-zettel-selected selection)))
   zettelkasten-zettel-selected)
 
+
+(defvar zettelkasten-ext-with-agent-id nil)
+(defun zettelkasten-ext-get-person-id ()
+  "Query for agents and set current agent id."
+  (let* ((completions
+          (zettelkasten-db-query [:select :distinct [n:title n:zkid]
+                                  :from nodes n
+                                  :inner-join edges e
+                                  :on (= n:zkid e:subject)
+                                  :where (in e:object $v1)]
+                                 (vconcat (-flatten (zettelkasten--tree-children-rec
+                                                     "prov:Agent"
+                                                     zettelkasten-classes)))))
+         (selection (assoc (completing-read "Agent: " completions) completions)))
+
+    (setq zettelkasten-ext-with-agent-id (cadr selection))
+    (car selection)))
+
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
