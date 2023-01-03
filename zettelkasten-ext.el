@@ -986,6 +986,32 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (org-set-tags-command)
       (zettelkasten-headline-add-descriptor))))
 
+(defun zettelkasten-ext-create-folgezettel ()
+  (interactive)
+  (let* ((filename (buffer-file-name))
+         (element (org-element-parse-buffer))
+         (source-id (caar (zettelkasten-get-property-or-keyword-upwards
+                           filename element "CUSTOM_ID")))
+         (source-type (zettelkasten-get-property-or-keyword-upwards
+                       filename element "RDF_TYPE"))
+         (org-id-method 'ts)
+         (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
+         (org-fast-tag-selection-single-key nil))
+    (if (not (member "zkt:Zettel" (car source-type)))
+        (message "Zk: ressource is not a zkt:Zettel.")
+      (outline-next-heading)
+      (open-line 1)
+      (insert (concat "*** " (read-string "Title: ")))
+      (zettelkasten-set-type-headline "zkt:Zettel")
+      (zettelkasten-id-get-create (org-id-new))
+      (zettelkasten-heading-set-relation-to-context
+       "zkt:follows" source-id)
+      (org-set-property "GENERATED_AT_TIME"
+                        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
+                                (job/current-timezone-offset-hours)))
+      (zettelkasten-headline-add-descriptor))))
+
+
 
 
 ;;; begin: hydra
