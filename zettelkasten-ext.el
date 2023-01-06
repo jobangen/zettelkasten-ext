@@ -851,6 +851,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
               (org-find-exact-headline-in-buffer headline)))))
      (org-refile nil nil (list headline file nil pos))))
 
+;;;###autoload
 (defun zettelkasten-inbox-process ()
   (interactive)
   (ignore-errors
@@ -880,6 +881,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   (zettelkasten-inbox-process))
 ;;; end:
 
+;;;###autoload
 (defun zettelkasten-generate-entity-from-activity-at-point ()
   (interactive)
   (let* ((filename (buffer-file-name))
@@ -919,6 +921,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
         (org-set-tags-command)
         (zettelkasten-headline-add-descriptor)))))
 
+;;;###autoload
 (defun zettelkasten-derive-task-from-entity-at-point ()
   (interactive)
   (let* ((filename (buffer-file-name))
@@ -931,7 +934,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
          (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
          (org-fast-tag-selection-single-key nil))
     (if (not (member (caar source-type) (-flatten (zettelkasten--tree-children-rec
-                                           "prov:Entity" zettelkasten-classes))))
+                                                   "prov:Entity" zettelkasten-classes))))
         (message "Zk: ressource is not an entity.")
       (outline-next-heading)
       (open-line 1)
@@ -954,6 +957,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (org-set-tags-command)
       (zettelkasten-headline-add-descriptor))))
 
+;;;###autoload
 (defun zettelkasten-ext-create-subtask ()
   (interactive)
   (let* ((filename (buffer-file-name))
@@ -986,6 +990,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (org-set-tags-command)
       (zettelkasten-headline-add-descriptor))))
 
+;;;###autoload
 (defun zettelkasten-ext-create-folgezettel ()
   (interactive)
   (let* ((filename (buffer-file-name))
