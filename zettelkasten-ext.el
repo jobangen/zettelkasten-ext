@@ -1123,6 +1123,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 
   ("l" zettelkasten-insert-link "Link" :column "Edit")
   ("L" zettelkasten-insert-link-loop "Link loop")
+  ("jn" zettelkasten-ext-journal-daily-note "Daily note")
+  ("jt" zettelkasten-ext-journal-daily-task "Daily task")
 
   ("p" zettelkasten-capture-push "Push Link" :column "Zettelkasten")
   ("P" (zettelkasten-capture-push t) "Push Heading")
