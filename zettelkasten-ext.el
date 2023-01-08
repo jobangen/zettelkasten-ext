@@ -388,6 +388,47 @@ Add row to capture db for feed."
       (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:week::%W][W%W]]\n"))
       (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:week::%A][%A]]\n")))))
 
+;;;###autoload
+(defun zettelkasten-ext-journal-daily-note ()
+  "Create or open daily note."
+  (interactive)
+  (zettelkasten-journal-daily-file)
+  (goto-char (point-min))
+  (unless (search-forward "** Daily Note" nil t)
+    (progn
+      (search-forward ":RDF_TYPE: time:DateTimeDescription")
+      (outline-next-heading)
+      (open-line 1)
+      (insert (format-time-string "** Daily Note %Y-%m-%d"))
+      (org-set-property "CUSTOM_ID" (format-time-string "%Y-%m-%dT%H%M%S.%1N"))
+      (org-set-property "RDF_TYPE" "zkt:Note")
+      (org-set-property "GENERATED_AT_TIME"
+                        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
+                                (job/current-timezone-offset-hours)))))
+  (outline-next-heading)
+  (open-line 1)
+  (insert "- "))
+
+;;;###autoload
+(defun zettelkasten-ext-journal-daily-task ()
+  "Create or open daily note."
+  (interactive)
+  (zettelkasten-journal-daily-file)
+  (goto-char (point-min))
+  (unless (search-forward "** Daily Task" nil t)
+    (progn
+      (search-forward ":RDF_TYPE: time:DateTimeDescription")
+      (outline-next-heading)
+      (open-line 1)
+      (insert (format-time-string "** TODO [/] Daily Task %Y-%m-%d    :sticky:"))
+      (org-set-property "CUSTOM_ID" (format-time-string "%Y-%m-%dT%H%M%S.%1N"))
+      (org-set-property "RDF_TYPE" "zkt:Task")
+      (org-set-property "GENERATED_AT_TIME"
+                        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
+                                (job/current-timezone-offset-hours)))))
+  (outline-next-heading)
+  (open-line 1)
+  (insert "- [ ] "))
 
 ;;;###autoload
 (defun zettelkasten-journal-weekly-file ()
@@ -1015,6 +1056,48 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                         (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
                                 (job/current-timezone-offset-hours)))
       (zettelkasten-headline-add-descriptor))))
+
+;;;###autoload
+(defun zettelkasten-ext-create-ressource-from ()
+  (interactive)
+  (let* ((filename (buffer-file-name))
+         (element (org-element-parse-buffer))
+         (source-id (caar (zettelkasten-get-property-or-keyword-upwards
+                           filename element "CUSTOM_ID")))
+         (source-types (car (zettelkasten-get-property-or-keyword-upwards
+                             filename element "RDF_TYPE")))
+         (types-generalized (zettelkasten--generalize-types
+                             source-types))
+         (predicate-by-range (zettelkasten--get-predicates-by-range
+                               types-generalized))
+         (predicate (completing-read "Predicate: " predicate-by-range))
+         (predicate-domains (zettelkasten--get-domains-of-predicates
+                           (list predicate)))
+         (type-choices (delete-dups
+                        (-flatten (zettelkasten--tree-children-rec
+                                   (car predicate-domains)
+                                   zettelkasten-classes))))
+         (target-type (completing-read "New source: " type-choices))
+         )))
+
+(defun zettelkasten--get-predicates-by-range (subject-types)
+  "Get all predicates which domains match type in SUBJECT-TYPES."
+  (-flatten
+   (zettelkasten-db-query
+    [:select [name]
+     :from predicates
+     :where (in range $v1)]
+    (vconcat subject-types))))
+
+(defun zettelkasten--get-domains-of-predicates (predicates)
+  (-flatten
+   (zettelkasten-db-query
+    [:select [domain]
+     :from predicates
+     :where (in name $v1)]
+    (vconcat predicates))))
+
+
 
 
 
