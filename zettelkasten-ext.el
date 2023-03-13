@@ -1149,6 +1149,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   ("hz" zettelkasten-node-to-zettel "Zettel")
   ("e" zettelkasten-generate-entity-from-activity-at-point "Entity generation")
   ("t" zettelkasten-derive-task-from-entity-at-point "Task derivation")
+  ("gw" job/org-add-tag-this-week "Task this week")
 
   ("n" org-noter "noter" :column "Other")
   ("u" zettelkasten-update-org-agenda-files "Update agenda")
