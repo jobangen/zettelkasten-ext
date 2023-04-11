@@ -1181,6 +1181,8 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   ("v" zettelkasten-vis-buffer "Visualize")
   ("ü" zettelkasten-set-type-and-label "Set label and type")
   ("o" zettelkasten-zettel-open-external "Open external")
+  ("z" zettelkasten-ext-create-related-ressource "Create Outgoing")
+  ("Z" (zettelkasten-ext-create-related-ressource t) "Create Incoming")
 
   ("hc" zettelkasten-headline-add-collection "Add collection" :column "Heading")
   ("C-'" zettelkasten-headline-add-descriptor "Add descriptor")
