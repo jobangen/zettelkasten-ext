@@ -1065,7 +1065,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (zettelkasten-headline-add-descriptor))))
 
 ;;;###autoload
-(defun zettelkasten-ext-create-ressource-from ()
+(defun zettelkasten-ext-create-related-ressource (&optional incoming)
   (interactive)
   (let* ((filename (buffer-file-name))
          (element (org-element-parse-buffer))
@@ -1073,19 +1073,54 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                            filename element "CUSTOM_ID")))
          (source-types (car (zettelkasten-get-property-or-keyword-upwards
                              filename element "RDF_TYPE")))
-         (types-generalized (zettelkasten--generalize-types
+         (generalized-types (zettelkasten--generalize-types
                              source-types))
-         (predicate-by-range (zettelkasten--get-predicates-by-range
-                               types-generalized))
-         (predicate (completing-read "Predicate: " predicate-by-range))
-         (predicate-domains (zettelkasten--get-domains-of-predicates
-                           (list predicate)))
+         (predicate-options (if incoming (zettelkasten--get-predicates-by-range
+                                          generalized-types)
+                              (zettelkasten--get-predicates-by-domain
+                               generalized-types)))
+         (predicate (completing-read (if incoming "Predicate (incoming): "
+                                       "Predicate (outgoing):")
+                                     predicate-options))
+         (predicate-domains-or-ranges (if incoming (zettelkasten--get-domains-of-predicates
+                                                    (list predicate))
+                                        (zettelkasten--get-ranges-of-predicates (list predicate))))
          (type-choices (delete-dups
                         (-flatten (zettelkasten--tree-children-rec
-                                   (car predicate-domains)
+                                   (car predicate-domains-or-ranges)
                                    zettelkasten-classes))))
-         (target-type (completing-read "New source: " type-choices))
-         )))
+         (created-type (completing-read "Ressource type: " type-choices))
+         (created-id (zettelkasten-id-get-create (org-id-new) t))
+         (created-title (read-string "Title: ")))
+    (unless incoming
+      (insert "- ")
+      (zettelkasten-insert-link source-id predicate `(,created-id ,created-title))
+      (newline))
+
+    (outline-next-heading)
+    (open-line 1)
+    (insert (concat "*** " created-title))
+    (zettelkasten-set-type-headline created-type)
+    (org-set-property "CUSTOM_ID" created-id)
+    (when incoming
+      (zettelkasten-heading-set-relation-to-context
+       predicate source-id))
+
+    (when (member created-type
+                  '("zkt:Zettel" "zkt:Mitschrift" "zkt:Task"))
+      (org-set-property
+       "GENERATED_AT_TIME"
+       (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
+               (job/current-timezone-offset-hours))))
+
+    (when (member created-type '("zkt:Task"))
+      (org-todo "TODO")
+      (when (y-or-n-p "Link to activity? ")
+        (zettelkasten-heading-set-relation-to-context
+         "prov:wasGeneratedBy"))
+      (zettelkasten-heading-set-relation-to-context
+       "zkt:hadAdressat" "@me")
+      (org-set-tags-command))))
 
 (defun zettelkasten--get-predicates-by-range (subject-types)
   "Get all predicates which domains match type in SUBJECT-TYPES."
