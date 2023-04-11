@@ -663,6 +663,7 @@ Add row to capture db for feed."
                            :from edges])))
 
 (defun zettelkasten-node-to-zettel ()
+  "Create zettel as file from zettel heading."
   (interactive)
   (save-excursion
     (org-back-to-heading t)
@@ -672,6 +673,8 @@ Add row to capture db for feed."
            (label (cdr (assoc "CUSTOM_ID" properties)))
            (descriptor (cdr (assoc "DESCRIPTOR" properties)))
            (collection (cdr (assoc "COLLECTION" properties)))
+           (gen-at-time (cdr (assoc "GENERATED_AT_TIME" properties)))
+           (turtle (cdr (assoc "TURTLE" properties)))
            (content (progn
                       (org-forward-paragraph 2)
                       (buffer-substring-no-properties
@@ -680,19 +683,23 @@ Add row to capture db for feed."
       (zettelkasten-new-zettel title rdftype)
       (zettelkasten-set-label label)
       (when collection
-        (zettelkasten-zettel-ensure-keyword "COLLECTION")
+        (zettelkasten--ensure-keyword "COLLECTION")
         (insert (format " %s" collection)))
       (search-forward "Inhalt")
       (next-line)
       (insert content)
+      (when gen-at-time
+        (zettelkasten--ensure-keyword "GENERATED_AT_TIME")
+        (insert (format " %s" gen-at-time)))
+      (when turtle
+        (zettelkasten--ensure-keyword "TURTLE")
+        (insert (format " %s" turtle)))
       (if descriptor
           (progn
-            (zettelkasten-zettel-ensure-keyword "DESCRIPTOR")
+            (zettelkasten--ensure-keyword "DESCRIPTOR")
             (insert (format " %s" descriptor)))
         (zettelkasten-zettel-add-descriptor))
       (save-buffer))))
-
-
 
 ;;; end:
 
