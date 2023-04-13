@@ -1105,14 +1105,18 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
     (when incoming
       (zettelkasten-heading-set-relation-to-context
        predicate source-id))
-
+    ;; Gen at generation
     (when (member created-type
                   '("zkt:Zettel" "zkt:Mitschrift" "zkt:Task"))
       (org-set-property
        "GENERATED_AT_TIME"
        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
                (job/current-timezone-offset-hours))))
-
+    ;; Mitschrift
+    (when (member created-type '("zkt:Task"))
+      (zettelkasten-heading-set-relation-to-context
+       "zktb:wasAuthoredBy" "@me"))
+    ;; Task
     (when (member created-type '("zkt:Task"))
       (org-todo "TODO")
       (when (y-or-n-p "Link to activity? ")
