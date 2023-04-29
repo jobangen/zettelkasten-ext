@@ -930,141 +930,6 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 ;;; end:
 
 ;;;###autoload
-(defun zettelkasten-generate-entity-from-activity-at-point ()
-  (interactive)
-  (let* ((filename (buffer-file-name))
-         (element (org-element-parse-buffer))
-         (source-id (caar (zettelkasten-get-property-or-keyword-upwards
-                           filename element "CUSTOM_ID")))
-         (source-type (zettelkasten-get-property-or-keyword-upwards
-                       filename element "RDF_TYPE"))
-         (type-choices (-flatten (zettelkasten--tree-children-rec
-                                  "prov:Entity" zettelkasten-classes)))
-         (org-id-method 'ts)
-         (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
-         (org-fast-tag-selection-single-key nil))
-    (if (not (member (caar source-type)
-                     (-flatten (zettelkasten--tree-children-rec
-                                "prov:Activity" zettelkasten-classes))))
-        (message "Zk: ressource is not an activity.")
-      (let ((type (completing-read "Type: " type-choices)))
-        (outline-next-heading)
-        (open-line 1)
-        (insert (concat "*** " (read-string "Title: ")))
-        (zettelkasten-set-type-headline type)
-        (zettelkasten-id-get-create)
-        (zettelkasten-heading-set-relation-to-context
-         "prov:wasGeneratedBy" source-id)
-        (org-set-property "GENERATED_AT_TIME"
-                          (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
-                                  (job/current-timezone-offset-hours)))
-        (when (string= type "zkt:Mitschrift")
-          (zettelkasten-heading-set-relation-to-context "zkt:wasAuthoredBy" "@me"))
-        (when (string= type "zkt:Task")
-          (org-todo "TODO")
-          (zettelkasten-heading-set-relation-to-context
-           "zkt:hadAdressat" "@me")
-          (when (y-or-n-p "Schedule task? ")
-            (org-schedule nil "")))
-        (org-set-tags-command)
-        (zettelkasten-headline-add-descriptor)))))
-
-;;;###autoload
-(defun zettelkasten-derive-task-from-entity-at-point ()
-  (interactive)
-  (let* ((filename (buffer-file-name))
-         (element (org-element-parse-buffer))
-         (source-id (caar (zettelkasten-get-property-or-keyword-upwards
-                           filename element "CUSTOM_ID")))
-         (source-type (zettelkasten-get-property-or-keyword-upwards
-                       filename element "RDF_TYPE"))
-         (org-id-method 'ts)
-         (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
-         (org-fast-tag-selection-single-key nil))
-    (if (not (member (caar source-type) (-flatten (zettelkasten--tree-children-rec
-                                                   "prov:Entity" zettelkasten-classes))))
-        (message "Zk: ressource is not an entity.")
-      (outline-next-heading)
-      (open-line 1)
-      (insert (concat "*** " (read-string "Title: ")))
-      (zettelkasten-set-type-headline "zkt:Task")
-      (zettelkasten-id-get-create (org-id-new))
-      (zettelkasten-heading-set-relation-to-context
-       "prov:wasDerivedFrom" source-id)
-      (org-set-property "GENERATED_AT_TIME"
-                        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
-                                (job/current-timezone-offset-hours)))
-      (org-todo "TODO")
-      (when (y-or-n-p "Schedule task? ")
-        (org-schedule nil ""))
-      (zettelkasten-heading-set-relation-to-context
-       "zkt:hadAdressat" "@me")
-      (when (y-or-n-p "Link to activity? ")
-        (zettelkasten-heading-set-relation-to-context
-         "prov:wasGeneratedBy"))
-      (org-set-tags-command)
-      (zettelkasten-headline-add-descriptor))))
-
-;;;###autoload
-(defun zettelkasten-ext-create-subtask ()
-  (interactive)
-  (let* ((filename (buffer-file-name))
-         (element (org-element-parse-buffer))
-         (source-id (caar (zettelkasten-get-property-or-keyword-upwards
-                           filename element "CUSTOM_ID")))
-         (source-type (zettelkasten-get-property-or-keyword-upwards
-                       filename element "RDF_TYPE"))
-         (org-id-method 'ts)
-         (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
-         (org-fast-tag-selection-single-key nil))
-    (if (not (member "zkt:Task" (car source-type)))
-        (message "Zk: ressource is not a zkt:Task.")
-      (outline-next-heading)
-      (open-line 1)
-      (insert (concat "*** " (read-string "Title: ")))
-      (zettelkasten-set-type-headline "zkt:Task")
-      (zettelkasten-id-get-create (org-id-new))
-      (zettelkasten-heading-set-relation-to-context
-       "dct:isPartOf" source-id)
-      (org-set-property "GENERATED_AT_TIME"
-                        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
-                                (job/current-timezone-offset-hours)))
-      (org-todo "TODO")
-      (zettelkasten-heading-set-relation-to-context
-       "zkt:hadAdressat" "@me")
-      (when (y-or-n-p "Link to activity? ")
-        (zettelkasten-heading-set-relation-to-context
-         "prov:wasGeneratedBy"))
-      (org-set-tags-command)
-      (zettelkasten-headline-add-descriptor))))
-
-;;;###autoload
-(defun zettelkasten-ext-create-folgezettel ()
-  (interactive)
-  (let* ((filename (buffer-file-name))
-         (element (org-element-parse-buffer))
-         (source-id (caar (zettelkasten-get-property-or-keyword-upwards
-                           filename element "CUSTOM_ID")))
-         (source-type (zettelkasten-get-property-or-keyword-upwards
-                       filename element "RDF_TYPE"))
-         (org-id-method 'ts)
-         (org-id-ts-format "%Y-%m-%dT%H%M%S.%1N")
-         (org-fast-tag-selection-single-key nil))
-    (if (not (member "zkt:Zettel" (car source-type)))
-        (message "Zk: ressource is not a zkt:Zettel.")
-      (outline-next-heading)
-      (open-line 1)
-      (insert (concat "*** " (read-string "Title: ")))
-      (zettelkasten-set-type-headline "zkt:Zettel")
-      (zettelkasten-id-get-create (org-id-new))
-      (zettelkasten-heading-set-relation-to-context
-       "zkt:follows" source-id)
-      (org-set-property "GENERATED_AT_TIME"
-                        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
-                                (job/current-timezone-offset-hours)))
-      (zettelkasten-headline-add-descriptor))))
-
-;;;###autoload
 (defun zettelkasten-ext-create-related-ressource (&optional incoming)
   (interactive)
   (let* ((filename (buffer-file-name))
@@ -1143,11 +1008,6 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
      :where (in name $v1)]
     (vconcat predicates))))
 
-
-
-
-
-
 ;;; begin: hydra
 (defhydra hydra-zettelkasten (:color blue)
   "Zettelkasten"
@@ -1195,10 +1055,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   ("hf" zettelkasten-headline-set-followup "Set followup")
   ("hr" zettelkasten-headline-reset "Reset")
   ("hz" zettelkasten-node-to-zettel "Zettel")
-  ("e" zettelkasten-generate-entity-from-activity-at-point "Entity generation")
-  ("t" zettelkasten-derive-task-from-entity-at-point "Task derivation")
   ("gw" job/org-add-tag-this-week "Task this week")
-
   ("n" org-noter "noter" :column "Other")
   ("u" zettelkasten-update-org-agenda-files "Update agenda")
   ("q" nil "Quit"))
