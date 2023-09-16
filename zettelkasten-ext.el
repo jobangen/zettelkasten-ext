@@ -1290,8 +1290,19 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
          (width 10)
          (ycenter 50)
          (xspace 5)
-         (xpos 20)
-         (factor 3.5))
+         (xpos 5)
+         (factor 3.5)
+         (linex -5)
+         (liney 50)
+         (line '((-5 . 50))))
+
+    (dolist (d data)
+      (setq linex (+ linex (+ width xspace)))
+      (setq liney (- liney (- (car d) (cadr d))))
+      (add-to-list 'line `(,linex . ,liney) t))
+    (add-to-list 'line `(,linex . 50) t)
+    (svg-polyline svg line :fill "yellow")
+
     (dolist (d data)
       (let ((green (* factor (car d)))
             (red (* factor (cadr d))))
@@ -1374,7 +1385,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                               (cadr entry))
                             sorted))
            (length (length numbers))
-           (tail (seq-subseq numbers (- length 39)))
+           (tail (seq-subseq numbers (- length 40)))
            (todaytask
             (or
              (caar (alist-get (intern (format-time-string "%Y-%m-%d"))
@@ -1395,7 +1406,6 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                                 combined)))
            (taskcount (- activetasks invaltasks)))
       (zettelkasten-plot-data tail todaytask todayinval taskcount))))
-
 
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
