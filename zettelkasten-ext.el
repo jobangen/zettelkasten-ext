@@ -1301,7 +1301,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
       (setq liney (- liney (- (car d) (cadr d))))
       (add-to-list 'line `(,linex . ,liney) t))
     (add-to-list 'line `(,linex . 50) t)
-    (svg-polyline svg line :fill "yellow")
+    (svg-polyline svg line :fill "lightblue")
 
     (dolist (d data)
       (let ((green (* factor (car d)))
