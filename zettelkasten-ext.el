@@ -1257,5 +1257,145 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
     (setq zettelkasten-ext-with-agent-id (cadr selection))
     (car selection)))
 
+(defun zettelkasten-task-overview ()
+  "Count tasks ad invalidated."
+  (interactive)
+  (let ((tasks (caar
+                (zettelkasten-db-query
+                 [:select [(funcall count e:subject)]
+                  :from edges e
+                  :inner-join edges e2
+                  :on (= e:subject e2:subject)
+                  :where (= e:predicate "rdf:type")
+                  :and (= e:object "zkt:Task")
+                  :and (= e2:predicate "prov:generatedAtTime")])))
+        (invalidated (caar
+                      (zettelkasten-db-query
+                       [:select [(funcall count e:subject)]
+                        :from edges e
+                        :inner-join edges e2
+                        :on (= e:subject e2:subject)
+                        :inner-join edges e3
+                        :on (= e:subject e3:subject)
+                        :where (= e:predicate "rdf:type")
+                        :and (= e:object "zkt:Task")
+                        :and (= e2:predicate "prov:generatedAtTime")
+                        :and (= e3:predicate "prov:invalidatedAtTime")]))))
+    (message (format "Tasks: %s, Done: %s, active: %s"
+                     tasks invalidated (- tasks invalidated)))))
+
+(defun zettelkasten-plot-data (data tdtask tdinval current)
+  "Plot task overview from DATA, TDTASK TDINVAL CURRENT."
+  (let* ((svg (svg-create 680 100 :stroke-width 1))
+         (width 10)
+         (ycenter 50)
+         (xspace 5)
+         (xpos 20)
+         (factor 3.5))
+    (dolist (d data)
+      (let ((green (* factor (car d)))
+            (red (* factor (cadr d))))
+        (svg-rectangle svg xpos (- ycenter green) width green :fill "green" :stroke "green" :id (concat "green" (number-to-string xpos)))
+        (svg-rectangle svg xpos ycenter width red :fill "red" :stroke "red" :id (concat "red" (number-to-string xpos)))
+        (setq xpos (+ xpos (+ width xspace)))))
+    (svg-line svg 0 50 630 50 :id "line1" :stroke "black")
+    (svg-text svg
+              (number-to-string tdtask)
+              :font-size "20"
+              :stroke "green"
+              :x 605
+              :y 40
+              :stroke-width 1)
+    (svg-text svg
+              (number-to-string tdinval)
+              :font-size "20"
+              :stroke "red"
+              :x 605
+              :y 72
+              :stroke-width 1)
+    (svg-text svg
+              (number-to-string current)
+              :font-size "25"
+              :x 635
+              :y 57
+              :stroke-width 1)
+    (format "%s" (svg-insert-image svg))))
+
+;;;###autoload
+(defun zettelkasten-task-overview-plot ()
+  "Count tasks ad invalidated."
+  (interactive)
+  (let* ((tasks
+          (zettelkasten-db-query
+           [:select [(funcall substr e2:object 2 10)
+                     (funcall count e:subject)]
+            :from edges e
+            :inner-join edges e2
+            :on (= e:subject e2:subject)
+            :where (= e:predicate "rdf:type")
+            :and (= e:object "zkt:Task")
+            :and (= e2:predicate "prov:generatedAtTime")
+            :group-by (funcall substr e2:object 2 10)
+            :order-by (funcall substr e2:object 2 10)
+            ]))
+         (invalidated
+          (zettelkasten-db-query
+           [:select [(funcall substr e3:object 2 10)
+                     (funcall count e:subject)]
+            :from edges e
+            :inner-join edges e2
+            :on (= e:subject e2:subject)
+            :inner-join edges e3
+            :on (= e:subject e3:subject)
+            :where (= e:predicate "rdf:type")
+            :and (= e:object "zkt:Task")
+            :and (= e2:predicate "prov:generatedAtTime")
+            :and (= e3:predicate "prov:invalidatedAtTime")
+            :group-by (funcall substr e3:object 2 10)
+            :order-by (funcall substr e3:object 2 10) :desc
+            ]))
+         (combined '()))
+
+    (dolist (entry tasks)
+      (if (assoc (car entry) invalidated)
+          (let* ((taskc (cadr entry))
+                 (invalc (car (alist-get (car entry) invalidated))))
+            (setf invalidated (assoc-delete-all (car entry) invalidated))
+            (add-to-list 'combined `(,(car entry) (,taskc ,invalc))))
+        (add-to-list 'combined `(,(car entry) (,(cadr entry) 0)))))
+
+    (dolist (entry invalidated)
+      (add-to-list 'combined `(,(car entry) (0 ,(cadr entry)))))
+
+    (let* ((sorted (-sort (lambda (a b)
+                            (string< (car a) (car b)))
+                          combined))
+           (numbers (mapcar (lambda (entry)
+                              (cadr entry))
+                            sorted))
+           (length (length numbers))
+           (tail (seq-subseq numbers (- length 39)))
+           (todaytask
+            (or
+             (caar (alist-get (intern (format-time-string "%Y-%m-%d"))
+                              sorted))
+             0))
+           (todayinval
+            (or
+             (car (cdar (alist-get (intern (format-time-string "%Y-%m-%d"))
+                                   sorted)))
+             0))
+           (activetasks (-sum
+                         (mapcar (lambda (arg)
+                                   (cadr arg))
+                                 tasks)))
+           (invaltasks (-sum
+                        (mapcar (lambda (arg)
+                                  (cadr (cadr arg)))
+                                combined)))
+           (taskcount (- activetasks invaltasks)))
+      (zettelkasten-plot-data tail todaytask todayinval taskcount))))
+
+
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
