@@ -1286,49 +1286,51 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 
 (defun zettelkasten-plot-data (data tdtask tdinval current)
   "Plot task overview from DATA, TDTASK TDINVAL CURRENT."
-  (let* ((svg (svg-create 680 100 :stroke-width 1))
+  (let* ((svgwidth 860)
+         (svgheight 200)
+
+         (svg (svg-create svgwidth svgheight :stroke-width 1))
          (width 10)
-         (ycenter 50)
+         (ycenter (/ svgheight 2))
          (xspace 5)
          (xpos 5)
          (factor 3.5)
          (linex -5)
-         (liney 50)
-         (line '((-5 . 50))))
-
-    (dolist (d data)
-      (setq linex (+ linex (+ width xspace)))
-      (setq liney (- liney (- (car d) (cadr d))))
-      (add-to-list 'line `(,linex . ,liney) t))
-    (add-to-list 'line `(,linex . 50) t)
-    (svg-polyline svg line :fill "lightblue")
-
+         (liney ycenter)
+         (line `((-5 . ,ycenter))))
+    
     (dolist (d data)
       (let ((green (* factor (car d)))
             (red (* factor (cadr d))))
         (svg-rectangle svg xpos (- ycenter green) width green :fill "green" :stroke "green" :id (concat "green" (number-to-string xpos)))
         (svg-rectangle svg xpos ycenter width red :fill "red" :stroke "red" :id (concat "red" (number-to-string xpos)))
-        (setq xpos (+ xpos (+ width xspace)))))
-    (svg-line svg 0 50 630 50 :id "line1" :stroke "black")
+        (setq xpos (+ xpos (+ width xspace)))
+        (setq linex (+ linex (+ width xspace)))
+        (setq liney (- liney (- (car d) (cadr d))))
+        (add-to-list 'line `(,linex . ,liney) t)
+        ))
+    (svg-polyline svg line :stroke-width 2 :stroke "darkblue" :fill "transparent")
+
+    (svg-line svg 0 ycenter (- svgwidth 80) ycenter :id "line1" :stroke "black")
     (svg-text svg
               (number-to-string tdtask)
               :font-size "20"
               :stroke "green"
-              :x 605
-              :y 40
+              :x (- svgwidth 100)
+              :y (- ycenter (* ycenter 0.1))
               :stroke-width 1)
     (svg-text svg
               (number-to-string tdinval)
               :font-size "20"
               :stroke "red"
-              :x 605
-              :y 72
+              :x (- svgwidth 100)
+              :y (+ ycenter (* ycenter 0.2))
               :stroke-width 1)
     (svg-text svg
               (number-to-string current)
               :font-size "25"
-              :x 635
-              :y 57
+              :x (- svgwidth 60)
+              :y (+ ycenter (* ycenter 0.05))
               :stroke-width 1)
     (format "%s" (svg-insert-image svg))))
 
@@ -1385,7 +1387,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                               (cadr entry))
                             sorted))
            (length (length numbers))
-           (tail (seq-subseq numbers (- length 40)))
+           (tail (seq-subseq numbers (- length 50)))
            (todaytask
             (or
              (caar (alist-get (intern (format-time-string "%Y-%m-%d"))
