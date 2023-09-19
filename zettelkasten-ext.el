@@ -1286,7 +1286,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 
 (defun zettelkasten-plot-data (data tdtask tdinval current)
   "Plot task overview from DATA, TDTASK TDINVAL CURRENT."
-  (let* ((svgwidth 860)
+  (let* ((svgwidth 1150)
          (svgheight 200)
 
          (svg (svg-create svgwidth svgheight :stroke-width 1))
@@ -1294,7 +1294,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
          (ycenter (/ svgheight 2))
          (xspace 5)
          (xpos 5)
-         (factor 3.5)
+         (factor 10)
          (linex -5)
          (liney ycenter)
          (line `((-5 . ,ycenter))))
@@ -1387,7 +1387,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
                               (cadr entry))
                             sorted))
            (length (length numbers))
-           (tail (seq-subseq numbers (- length 50)))
+           (tail (seq-subseq numbers (- length 69)))
            (todaytask
             (or
              (caar (alist-get (intern (format-time-string "%Y-%m-%d"))
