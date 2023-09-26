@@ -1409,7 +1409,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
            (taskcount (- activetasks invaltasks)))
       (zettelkasten-plot-data tail todaytask todayinval taskcount))))
 
-
+;;;###autoload
 (defun zettelkasten-task-finished-last-days ()
   "Display list of tasks finished in the last X days."
   (interactive)
