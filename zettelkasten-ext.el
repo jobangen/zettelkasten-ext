@@ -1409,5 +1409,36 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
            (taskcount (- activetasks invaltasks)))
       (zettelkasten-plot-data tail todaytask todayinval taskcount))))
 
+
+(defun zettelkasten-task-finished-last-days ()
+  "Display list of tasks finished in the last X days."
+  (interactive)
+  (let ((number (read-number "Times: " 7))
+        (date (decode-time))
+        (days '()))
+    (dotimes (n number)
+      (let ((upd-date (decoded-time-add date (make-decoded-time :day (- n)))))
+        (add-to-list 'days (intern (format-time-string "%F" (apply #'encode-time upd-date))))))
+    (let ((tasks (zettelkasten-db-query
+                  [:select [n:title e:subject]
+                   :from edges e
+                   :inner-join edges e3
+                   :on (= e:subject e3:subject)
+                   :inner-join nodes n
+                   :on (= e:subject n:zkid)
+                   :where (= e:predicate "rdf:type")
+                   :and (= e:object "zkt:Task")
+                   :and (= e3:predicate "prov:invalidatedAtTime")
+                   :and (in (funcall substr e3:object 2 10) $v1)
+                   :order-by e3:object :desc]
+                  (vconcat days))))
+      (switch-to-buffer-other-window "*Tasks*")
+      (erase-buffer)
+      (insert "#+title: Tasks\n\n")
+      (dolist (task tasks)
+        (insert (format " [[zk:%s][%s]]\n" (cadr task) (car task))))
+      (org-mode))))
+
+
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
