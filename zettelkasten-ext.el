@@ -1008,6 +1008,21 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
      :where (in name $v1)]
     (vconcat predicates))))
 
+
+(defhydra hydra-zettelkasten-refile ()
+  "Refile"
+  ("n" org-next-visible-heading "Next item")
+  ("r" org-refile "Refile")
+  ("R" zettelkasten-capture-refile "Capture Refile")
+  ("i" (zettelkasten-rfloc "~/OneDrive - University of Bergen/archive/zettel/2022-03-16-0946-inbox.org" "Tasks") "Inbox")
+  ("t" (zettelkasten-rfloc "~/OneDrive - University of Bergen/archive/zettel/2022-03-07-1153-termportalen.org" "Tasks") "Termportalen")
+  ("m" (zettelkasten-rfloc "~/OneDrive - University of Bergen/archive/zettel/2023-03-14-0934-marcus-next.org" "Tasks") "Marcus Next")
+  ("p" (zettelkasten-rfloc "~/OneDrive - University of Bergen/archive/zettel/2022-03-09-1112-position-systemutviklar-uib.org" "Tasks") "Position")
+  ("a" org-archive-subtree-default "Archive")
+  ;; ("b" zettelkasten-inbox-bury "Bury")
+  ;; ("T" zettelkasten-inbox-trash "Trash")
+  )
+
 ;;; begin: hydra
 (defhydra hydra-zettelkasten (:color blue)
   "Zettelkasten"
@@ -1020,12 +1035,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
   ("æ" zettelkasten-open-zettel-collection "Open collection")
   ("d" zettelkasten-open-zettel-descriptor "Open descriptor")
   ("s" zettelkasten-open-semantic "Open semantic")
-  ("jd" zettelkasten-journal-daily-file "Weekly file")
-  ("jw" zettelkasten-journal-weekly-file "Weekly file")
-
-  ("C-r" zettelkasten-inbox-process (format "Process inbox [%s]" 5) :color red :column "Inbox")
-  ("b" zettelkasten-inbox-bury "Bury" :color red)
-  ("t" zettelkasten-inbox-trash "Trash" :color red)
+  ("jd" zettelkasten-journal-daily-file "Daily file")
 
   ("l" zettelkasten-insert-link "Link" :column "Edit")
   ("L" zettelkasten-insert-link-loop "Link loop")
@@ -1050,14 +1060,16 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 
   ("hc" zettelkasten-headline-add-collection "Add collection" :column "Heading")
   ("C-'" zettelkasten-headline-add-descriptor "Add descriptor")
-  ("r" zettelkasten-capture-refile "Refile")
   ("+" zettelkasten-heading-to-node "Node")
   ("hf" zettelkasten-headline-set-followup "Set followup")
   ("hr" zettelkasten-headline-reset "Reset")
   ("hz" zettelkasten-node-to-zettel "Zettel")
   ("gw" job/org-add-tag-this-week "Task this week")
+
   ("n" org-noter "noter" :column "Other")
   ("u" zettelkasten-update-org-agenda-files "Update agenda")
+  ("C-r" hydra-zettelkasten-refile/body "Refile hydra")
+
   ("q" nil "Quit"))
 ;;; end:
 
