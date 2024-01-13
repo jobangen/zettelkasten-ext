@@ -718,7 +718,7 @@ Add row to capture db for feed."
 
 (define-minor-mode zettelkasten-capture-mode
   "Minor mode for special key bindings in a zettelkasten capture buffer.
-Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
+Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
   nil " capture" zettelkasten-capture-mode-map
   (setq-local
    header-line-format
@@ -729,14 +729,18 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 ;;;###autoload
 (defun zettelkasten-capture ()
   (interactive)
-  (delete-other-windows)
-  (split-window-horizontally)
-  (other-window 1 nil)
-  (switch-to-next-buffer)
-  (zettelkasten-open-zettel)
-  (goto-char (point-min))
-  (end-of-line)
-  (search-forward "*")
+  (if (equal zettelkasten-capture-state 'edit)
+      (progn
+        (org-tree-to-indirect-buffer)
+        (other-window 1 nil))
+    (delete-other-windows)
+    (split-window-horizontally)
+    (other-window 1 nil)
+    (switch-to-next-buffer)
+    (zettelkasten-open-zettel)
+    (goto-char (point-min))
+    (end-of-line)
+    (search-forward "*"))
   (zettelkasten-capture-mode))
 
 
@@ -761,6 +765,13 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
         ((equal zettelkasten-capture-state 'refile)
          (progn
            (zettelkasten-refile-subtree-other-window)
+           (setq zettelkasten-capture-state t)))
+        ((equal zettelkasten-capture-state 'edit)
+         (progn
+           (kill-current-buffer)
+           (other-window 1 nil)
+           (delete-other-windows)
+           (hydra-zettelkasten-process/body)
            (setq zettelkasten-capture-state t)))
         ((equal zettelkasten-capture-state 'link-heading)
          (org-with-wide-buffer
@@ -817,6 +828,12 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 (defun zettelkasten-capture-refile ()
   (interactive)
   (setq zettelkasten-capture-state 'refile)
+  (zettelkasten-capture))
+
+;;;###autoload
+(defun zettelkasten-capture-edit ()
+  (interactive)
+  (setq zettelkasten-capture-state 'edit)
   (zettelkasten-capture))
 
 (defun zettelkasten-link-zettel-other-window (&optional heading)
@@ -1009,10 +1026,11 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
     (vconcat predicates))))
 
 
-(defhydra hydra-zettelkasten-refile ()
-  "Refile"
+(defhydra hydra-zettelkasten-process ()
+  "Process"
   ("n" org-next-visible-heading "Next item")
   ("r" org-refile "Refile")
+  ("e" zettelkasten-capture-edit "Edit" :color blue)
   ("R" zettelkasten-capture-refile "Capture Refile")
   ("i" (zettelkasten-rfloc "~/OneDrive - University of Bergen/archive/zettel/2022-03-16-0946-inbox.org" "Tasks") "Inbox")
   ("t" (zettelkasten-rfloc "~/OneDrive - University of Bergen/archive/zettel/2022-03-07-1153-termportalen.org" "Tasks") "Termportalen")
@@ -1068,7 +1086,7 @@ Turning on this mode runs the normal hook `zettelkasten-capture-mode-hook'."
 
   ("n" org-noter "noter" :column "Other")
   ("u" zettelkasten-update-org-agenda-files "Update agenda")
-  ("C-r" hydra-zettelkasten-refile/body "Refile hydra")
+  ("C-p" hydra-zettelkasten-process/body "Refile hydra")
 
   ("q" nil "Quit"))
 ;;; end:
