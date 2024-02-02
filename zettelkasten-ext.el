@@ -1082,7 +1082,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
   ("hf" zettelkasten-headline-set-followup "Set followup")
   ("hr" zettelkasten-headline-reset "Reset")
   ("hz" zettelkasten-node-to-zettel "Zettel")
-  ("gw" job/org-add-tag-this-week "Task this week")
+  ("gw" job/add-tag-this-week-dwim "Task this week")
 
   ("n" org-noter "noter" :column "Other")
   ("u" zettelkasten-update-org-agenda-files "Update agenda")
