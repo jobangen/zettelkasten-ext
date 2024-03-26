@@ -394,7 +394,7 @@ Add row to capture db for feed."
   (interactive)
   (zettelkasten-journal-daily-file)
   (goto-char (point-min))
-  (unless (search-forward "** Daily Note" nil t)
+  (unless (search-forward "** Journal" nil t)
     (progn
       (search-forward ":RDF_TYPE: time:DateTimeDescription")
       (outline-next-heading)
