@@ -389,7 +389,7 @@ Add row to capture db for feed."
       (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:week::%A][%A]]\n")))))
 
 ;;;###autoload
-(defun zettelkasten-ext-journal-daily-note ()
+(defun zettelkasten-ext-journal-daily-journal ()
   "Create or open daily note."
   (interactive)
   (zettelkasten-journal-daily-file)
@@ -399,15 +399,14 @@ Add row to capture db for feed."
       (search-forward ":RDF_TYPE: time:DateTimeDescription")
       (outline-next-heading)
       (open-line 1)
-      (insert (format-time-string "** Daily Note %Y-%m-%d"))
+      (insert (format-time-string "** Journal %Y-%m-%d"))
       (org-set-property "CUSTOM_ID" (format-time-string "%Y-%m-%dT%H%M%S.%1N"))
       (org-set-property "RDF_TYPE" "zkt:Note")
       (org-set-property "GENERATED_AT_TIME"
                         (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
                                 (job/current-timezone-offset-hours)))))
   (outline-next-heading)
-  (open-line 1)
-  (insert "- "))
+  (open-line 1))
 
 ;;;###autoload
 (defun zettelkasten-ext-journal-daily-task ()
@@ -1057,7 +1056,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 
   ("l" zettelkasten-insert-link "Link" :column "Edit")
   ("L" zettelkasten-insert-link-loop "Link loop")
-  ("jn" zettelkasten-ext-journal-daily-note "Daily note")
+  ("jj" zettelkasten-ext-journal-daily-journal "Daily note")
   ("jt" zettelkasten-ext-journal-daily-task "Daily task")
 
   ("p" zettelkasten-capture-push "Push Link" :column "Zettelkasten")
