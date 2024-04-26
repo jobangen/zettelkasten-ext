@@ -996,7 +996,8 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
     ;; Mitschrift
     (when (member created-type '("zkt:Task"))
       (zettelkasten-heading-set-relation-to-context
-       "zktb:wasAuthoredBy" "@me"))
+       "zktb:wasAuthoredBy" "@me")
+      (org-schedule))
     ;; Task
     (when (member created-type '("zkt:Task"))
       (org-todo "TODO")
