@@ -187,7 +187,8 @@
                                "|"
                                (cdr entry-id)
                                "|"
-                               url)))
+                               url))
+         (bibfile (car org-ref-default-bibliography)))
     (if (string-match "DOI: \\(.*\\)$" content)
         (doi-add-bibtex-entry (match-string 1 content)
                               (ido-completing-read
@@ -202,59 +203,62 @@
          ((= 1 (length dois))
           (doi-utils-add-bibtex-entry-from-doi
            (car dois)
-           (ido-completing-read
-            "Bibfile: "
-            (append (f-entries "." (lambda (f)
-                                     (and (not (string-match "#" f))
-                                          (f-ext? f "bib"))))
-                    org-ref-default-bibliography)))
-          action)
+           bibfile))
          ;; Multiple DOIs found
          ((> (length dois) 1)
           (ivy-read "Select a DOI" (let ((dois '()))
                                      (with-current-buffer (url-retrieve-synchronously url)
-                                       (loop for doi-pattern in org-ref-doi-regexps
-                                             do
-                                             (goto-char (point-min))
-                                             (while (re-search-forward doi-pattern nil t)
-                                               (pushnew
-                                                ;; Cut off the doi, sometimes
-                                                ;; false matches are long.
-                                                (cons (format "%40s | %s"
-                                                              (substring
-                                                               (match-string 1)
-                                                               0 (min
-                                                                  (length (match-string 1))
-                                                                  40))
-                                                              doi-pattern)
-                                                      (match-string 1))
-                                                dois
-                                                :test #'equal)))
+                                       (cl-loop for doi-pattern in org-ref-doi-regexps
+                                                do
+                                                (goto-char (point-min))
+                                                (while (re-search-forward doi-pattern nil t)
+                                                  (cl-pushnew
+                                                   ;; Cut off the doi, sometimes
+                                                   ;; false matches are long.
+                                                   (cons (format "%40s | %s"
+                                                                 (substring
+                                                                  (match-string 1)
+                                                                  0 (min
+                                                                     (length (match-string 1))
+                                                                     40))
+                                                                 doi-pattern)
+                                                         (match-string 1))
+                                                   dois
+                                                   :test #'equal)))
                                        (reverse dois)))
                     :action
                     (lambda (x)
-                      (let ((bibfile (car org-ref-default-bibliography))
-                            (doi (cdr x)))
+                      (let ((doi (cdr x)))
 
-                          (doi-utils-add-bibtex-entry-from-doi
-                           doi
-                           bibfile)
-                          ;; this removes two blank lines before each entry.
-                          (bibtex-beginning-of-entry)
-                          (delete-char -2)
+                        (doi-utils-add-bibtex-entry-from-doi
+                         doi
+                         bibfile)
+                        ;; this removes two blank lines before each entry.
+                        ;; (bibtex-beginning-of-entry)
+                        ;; (delete-char -2)
                         ;; edit entry
-                        (delete-other-windows)
-                        (split-window-horizontally)
-                        (other-window 1 nil)
-                        (find-file bibfile)
-                        (goto-char (point-max))
-                        (bibtex-beginning-of-entry)
                         ;; (when (search-forward "year" nil t)
                         ;;   (replace-match "date"))
-                        ;; (bibtex-clean-entry t)
-                        ;; (save-buffer)
-                        ;; (org-ref-open-bibtex-notes)
-                        )))))))))
+                        ;;   (bibtex-clean-entry t) (save-buffer)
+                        ;;   (org-ref-open-bibtex-notes)
+                        ))))))
+
+      (delete-other-windows)
+      (split-window-horizontally)
+      (other-window 1 nil)
+      (find-file bibfile)
+      (goto-char (point-max))
+      (bibtex-beginning-of-entry)
+      (delete-char -1)
+      (right-char 1)
+      (capitalize-word 0)
+      (right-word 1)
+      (right-char 1)
+      (call-interactively 'kill-line)
+      (insert ",")
+      (when (search-forward "year" nil t)
+        (replace-match "date"))
+      (bibtex-clean-entry t))))
 
 ;;;###autoload
 (defun zettelkasten-elfeed-new-zettel ()
@@ -287,7 +291,7 @@ Add row to capture db for feed."
         (priority (completing-read "Priority: " '("A" "B" "C" "D" "E"))))
     (doi-utils-add-entry-from-elfeed-entry)
     (zettelkasten-db-query [:insert :into capture
-                                    :values ([nil $s1 $s2 $s3])]
+                            :values ([nil $s1 $s2 $s3])]
                            feed (format-time-string "%Y-%m-%d") priority)))
 
 ;;;###autoload
