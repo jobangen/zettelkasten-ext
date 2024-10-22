@@ -232,16 +232,7 @@
 
                         (doi-utils-add-bibtex-entry-from-doi
                          doi
-                         bibfile)
-                        ;; this removes two blank lines before each entry.
-                        ;; (bibtex-beginning-of-entry)
-                        ;; (delete-char -2)
-                        ;; edit entry
-                        ;; (when (search-forward "year" nil t)
-                        ;;   (replace-match "date"))
-                        ;;   (bibtex-clean-entry t) (save-buffer)
-                        ;;   (org-ref-open-bibtex-notes)
-                        ))))))
+                         bibfile)))))))
 
       (delete-other-windows)
       (split-window-horizontally)
@@ -251,14 +242,18 @@
       (bibtex-beginning-of-entry)
       (delete-char -1)
       (right-char 1)
-      (capitalize-word 0)
+      (capitalize-word 1)
       (right-word 1)
       (right-char 1)
       (call-interactively 'kill-line)
       (insert ",")
       (when (search-forward "year" nil t)
         (replace-match "date"))
-      (bibtex-clean-entry t))))
+      (bibtex-beginning-of-entry)
+      (when (search-forward "DATE_ADDED" nil t)
+        (replace-match "timestamp"))
+      (bibtex-clean-entry t)
+      (save-buffer))))
 
 ;;;###autoload
 (defun zettelkasten-elfeed-new-zettel ()
@@ -287,12 +282,25 @@ Add row to capture db for feed."
   "Add elfeed entry to bibtex and create zettel.
 Add row to capture db for feed."
   (interactive)
+  (doi-utils-add-entry-from-elfeed-entry)
+  (other-window 1 nil)
   (let ((feed (zettelkasten-elfeed-get-feed-title))
-        (priority (completing-read "Priority: " '("A" "B" "C" "D" "E"))))
+        (priority (completing-read "Priority: " '("A" "B" "C" "D" "E")))
+        (capture (buffer-substring-no-properties (point-min) (point-max))))
     (doi-utils-add-entry-from-elfeed-entry)
+    (other-window 1 nil)
     (zettelkasten-db-query [:insert :into capture
                             :values ([nil $s1 $s2 $s3])]
-                           feed (format-time-string "%Y-%m-%d") priority)))
+                           feed (format-time-string "%Y-%m-%d") priority)
+    (other-window 1 nil)
+    (bibtex-completion-edit-notes (list (bibtex-completion-get-key-bibtex)))
+    (goto-char (point-min))
+    (when (search-forward "zktb:article" nil t)
+      (replace-match "zktb:Article"))
+    (search-forward "Inhalt")
+    (next-line)
+    (insert capture)
+    (goto-char (point-min))))
 
 ;;;###autoload
 (defun zettelkasten-elfeed-skip ()
@@ -1090,7 +1098,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 
   ("n" org-noter "noter" :column "Other")
   ("u" zettelkasten-update-org-agenda-files "Update agenda")
-  ("C-p" hydra-zettelkasten-process/body "Refile hydra")
+  ("r" hydra-zettelkasten-process/body "Refile hydra")
 
   ("q" nil "Quit"))
 ;;; end:
