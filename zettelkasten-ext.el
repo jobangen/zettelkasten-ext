@@ -1040,7 +1040,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 
 (defhydra hydra-zettelkasten-process ()
   "Process"
-  ("p" org-previoud-visible-heading "Previous heading" :column "Misc")
+  ("p" org-previous-visible-heading "Previous heading" :column "Misc")
   ("n" org-next-visible-heading "Next heading")
   ("e" zettelkasten-capture-edit "Edit" :color blue)
   ("r" org-refile "Refile")
