@@ -456,10 +456,9 @@ Add row to capture db for feed."
 ;;;###autoload
 (defun zettelkasten-link-archive ()
   (interactive)
-  (let* ((arch-path "/home/job/archive/date-description/")
-         (file (read-file-name
-                "File: " arch-path))
-         (file-proc (car (split-string (s-replace arch-path "" file) " -- ")))
+  (let* ((file (read-file-name
+                "File: " date-description-dir))
+         (file-proc (car (split-string (s-replace date-description-dir "" file) "--")))
          (description (read-string "Description: "
                                    (last (split-string file-proc "/")))))
     (insert (format "[[arch:%s][%s]]" file-proc description))))
