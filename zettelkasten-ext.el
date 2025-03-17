@@ -1483,6 +1483,33 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
         (insert (format " [[zk:%s][%s]]\n" (cadr task) (car task))))
       (org-mode))))
 
+(defun zettelkasten-get-top-zettel ()
+  (interactive)
+  (let* ((top-zettel (cl-remove-if-not
+                      (lambda (x) (null (caddr x)))
+                      (zettelkasten-db-query
+                       [:select :distinct [n:title n:zkid e2:predicate]
+                        :from nodes n
+                        :inner-join v_edges_union e
+                        :on (= n:zkid e:subject)
+                        :and (= e:predicate "rdf:type")
+                        :and (= e:object "zkt:Zettel")
+                        :left-join v_edges_union e2
+                        :on (and (= n:zkid e2:subject)
+                                 (or (= e2:predicate "zkt:follows")
+                                     (= e2:predicate "zkt:branchesOffFrom")))
+                        :order-by n:title :collate :nocase
+                        ;; :where (null e2:predicate)
+                        ])))
+         (z-length (length top-zettel)))
+    (switch-to-buffer-other-window "*Zettel*")
+    (erase-buffer)
+    (insert (format "#+title: Zettel (%s)\n\n" z-length))
+    (dolist (zettel top-zettel)
+      (insert (format "- [[zk:%s][%s]]\n" (cadr zettel) (car zettel)))))
+  (goto-char (point-min))
+  (org-mode))
+
 
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
