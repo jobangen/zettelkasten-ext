@@ -1482,6 +1482,42 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
         (insert (format " [[zk:%s][%s]]\n" (cadr task) (car task))))
       (org-mode))))
 
+(defun zettelkasten-get-folgezettel (id)
+  (cl-remove-if-not
+   (lambda (x) (null (caddr x)))
+   (zettelkasten-db-query
+    [:select :distinct [n:title n:zkid]
+     :from nodes n
+     :inner-join v_edges_union e
+     :on (= n:zkid e:object)
+     :and (= e:subject $s1)
+     :and (= e:predicate "zkt:followedBy")
+     ]
+    id)))
+
+(defun zettelkasten-get-branches (id)
+  (cl-remove-if-not
+   (lambda (x) (null (caddr x)))
+   (zettelkasten-db-query
+    [:select :distinct [n:title n:zkid]
+     :from nodes n
+     :inner-join v_edges_union e
+     :on (= n:zkid e:object)
+     :and (= e:subject  $s1)
+     :and (= e:predicate "zkt:hasBranch")
+     ]
+    id)))
+
+(defun increment-letter (letter)
+  "Increment a letter, wrapping from z to a."
+  (let ((char (string-to-char letter)))
+    (char-to-string
+     (cond
+      ((= char ?z) ?a)
+      ((= char ?Z) ?A)
+      (t (1+ char))))))
+
+
 (defun zettelkasten-get-top-zettel ()
   (interactive)
   (let* ((top-zettel (cl-remove-if-not
@@ -1498,14 +1534,34 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
                                  (or (= e2:predicate "zkt:follows")
                                      (= e2:predicate "zkt:branchesOffFrom")))
                         :order-by n:title :collate :nocase
-                        ;; :where (null e2:predicate)
                         ])))
-         (z-length (length top-zettel)))
+         (z-length (length top-zettel))
+         (counter 1))
     (switch-to-buffer-other-window "*Zettel*")
     (erase-buffer)
     (insert (format "#+title: Zettel (%s)\n\n" z-length))
     (dolist (zettel top-zettel)
-      (insert (format "- [[zk:%s][%s]]\n" (cadr zettel) (car zettel)))))
+      (insert (format "- %2d [[zk:%s][%s]]\n" counter (cadr zettel) (car zettel)))
+
+      ;;  Branches
+      (let ((branches (zettelkasten-get-branches (cadr zettel)))
+            (branchcounter "a"))
+        (dolist (branchzettel branches)
+          (insert (format "  - %2d.1%s [[zk:%s][%s]]\n" counter branchcounter (cadr branchzettel) (car branchzettel)))
+          (setq branchcounter (increment-letter branchcounter))))
+
+      ;; Folgezettel
+      (let ((current-zettel zettel)
+            (folgecounter 1))
+        (cl-loop
+         (let ((folgezettel (car (zettelkasten-get-folgezettel (cadr current-zettel)))))
+           (unless (car folgezettel) (cl-return))
+           (setq folgecounter (1+ folgecounter))
+           (insert (format "  - %2d.%d [[zk:%s][%s]]\n" counter folgecounter (cadr folgezettel) (car folgezettel)))
+           (setq current-zettel folgezettel))))
+
+      (setq counter (1+ counter))))
+
   (goto-char (point-min))
   (org-mode))
 
