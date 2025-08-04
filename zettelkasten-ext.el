@@ -1201,18 +1201,27 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
   (interactive)
   (counsel-ag (thing-at-point 'symbol) zettelkasten-zettel-directory nil))
 
+(defun zettelkasten--get-collections ()
+  (zettelkasten-db-query
+   [:select :distinct [zkid]
+    :from edges e
+    :inner-join nodes n
+    :on (= e:subject n:zkid)
+    :where (= e:predicate "rdf:type")
+    :and (= e:object "prov:Collection")
+    ]))
+
+
 ;;;###autoload
 (defun zettelkasten-zettel-add-collection (&optional collection)
   (interactive)
   (save-excursion
-    (zettelkasten--zettel-ensure-keyword "COLLECTION")
+    (zettelkasten--ensure-keyword "COLLECTION")
     (insert (concat " "
                     (or collection
                         (completing-read
                          "Collection: "
-                         (-flatten (zettelkasten-db-query
-                                    [:select :distinct [collection]
-                                             :from collection ])))))))
+                         (zettelkasten--get-collections))))))
   (unless collection
     (zettelkasten-zettel-add-collection)))
 
@@ -1228,7 +1237,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
          (ins-title (if (equal zet-title new-title)
                         t
                       new-title)))
-    (zettelkasten--zettel-ensure-keyword "INDEX")
+    (zettelkasten--ensure-keyword "INDEX")
     (end-of-line)
     (insert (format " \"%s::%s\"" idx ins-title))))
 
@@ -1240,10 +1249,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
           (split-string
            (or (org-entry-get nil "COLLECTION") "")))
          (add
-          (ivy-read "Collection [Headline]: "
-                    (-flatten (zettelkasten-db-query
-                               [:select :distinct [collection]
-                                        :from collection]))))
+          (ivy-read "Collection [Headline]: " (zettelkasten--get-collections)))
          (join
           (sort (append current (list add)) 'string<))
          (string
