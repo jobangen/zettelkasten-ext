@@ -1057,9 +1057,9 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 ;;; begin: hydra
 (defhydra hydra-zettelkasten (:color blue)
   "Zettelkasten"
-  ;; ("C-ä" zettelkasten-open-zettel "Open Zettel" :column "Open")
+  ("C-ä" zettelkasten-open-zettel "Open Zettel" :column "Open")
   ("C-æ" zettelkasten-open-zettel "Open Zettel" :column "Open")
-  ;; ("Ä" (zettelkasten-open-zettel t) "Open Nodes")
+  ("Ä" (zettelkasten-open-zettel t) "Open Nodes")
   ("Æ" (zettelkasten-open-zettel t) "Open Nodes")
   ("R" zettelkasten-open-zettel-random "Open random")
   ;; ("ä" zettelkasten-open-zettel-collection "Open collection")
