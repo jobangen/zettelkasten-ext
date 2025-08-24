@@ -52,8 +52,6 @@
          (filter
           (assoc (completing-read "Filter: " completions) completions)))
     (setq zettelkasten-context-filter filter)))
-;;; end:
-
 
 ;;; begin: ephemera
 (push '("e" "Zettel ephemera" plain
@@ -68,8 +66,6 @@
         :immediate-finish t
         :jump-to-captured t)
       org-capture-templates)
-;;; end:
-
 
 ;;; begin: elfeed
 (defun zettelkasten-elfeed-get-feed-title ()
@@ -310,8 +306,6 @@ Add row to capture db for feed."
                                     :values ([nil $s1 $s2 $s3])]
                            feed (format-time-string "%Y-%m-%d") "Z"))
   (elfeed-show-next))
-;;; end:
-
 
 ;;; begin: convenience functions
 ;;;###autoload
@@ -711,11 +705,7 @@ Add row to capture db for feed."
         (zettelkasten-zettel-add-descriptor))
       (save-buffer))))
 
-;;; end:
-
-
 ;;; begin: capture
-
 (defvar zettelkasten-capture-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-c" #'zettelkasten-capture-finalize)
@@ -879,7 +869,6 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
       (setq zettelkasten-capture-state 'push)
     (setq zettelkasten-capture-state 'push-heading))
   (zettelkasten-capture))
-;;; end:
 
 ;;; begin: index
 ;; TODO: subitems, 
@@ -954,7 +943,6 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
   (org-todo "CANCELLED")
   (zettelkasten-rfloc zettelkasten-inbox-file "Trash")
   (zettelkasten-inbox-process))
-;;; end:
 
 ;;;###autoload
 (defun zettelkasten-ext-create-related-ressource (&optional incoming)
@@ -1109,7 +1097,6 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
   ("r" hydra-zettelkasten-process/body "Refile hydra")
 
   ("q" nil "Quit"))
-;;; end:
 
 ;;; begin: export
 ;;; TODO: add support for exporting links to headlines
@@ -1175,8 +1162,6 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 ;;                         :order-by e1:object
 ;;                         ])
 
-;;; end:
-
 ;;;###autoload
 (defun zettelkasten-heading-to-docpart ()
   (interactive)
@@ -1184,7 +1169,6 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
                                     "zkt:FormalDocumentPart"))
   (zettelkasten-id-get-create (concat (file-name-base) "--"))
   (zettelkasten-heading-set-relation-to-context "dct:isPartOf"))
-
 
 ;;;###autoload
 (defun zettelkasten-open-dir ()
@@ -1210,7 +1194,6 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
     :where (= e:predicate "rdf:type")
     :and (= e:object "prov:Collection")
     ]))
-
 
 ;;;###autoload
 (defun zettelkasten-zettel-add-collection (&optional collection)
