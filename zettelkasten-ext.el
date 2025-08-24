@@ -1580,5 +1580,37 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
   (goto-char (point-min))
   (org-mode))
 
+(defun zettelkasten-list-collection-members ()
+  (interactive)
+  (let* ((zkid (zettelkasten--get-zkid-at-point))
+         (title (caar (zettelkasten-db-query
+                       [:select :distinct [title]
+                        :from nodes
+                        :where (= zkid $s1)
+                        ]
+                       zkid)))
+         (members (zettelkasten-db-query
+                   [:select :distinct [n:zkid n:title e2:object]
+                    :from nodes n
+                    :inner-join v_edges_union e
+                    :on (= n:zkid e:object)
+                    :and (= e:subject $s1)
+                    :and (= e:predicate "prov:hadMember")
+                    :inner-join v_edges_union e2
+                    :on (and (= e:object e2:subject)
+                             (= e2:predicate "prov:generatedAtTime"))
+                    :order-by [(desc e2:object)]
+                    ]
+                   zkid)))
+    (when title
+      (switch-to-buffer-other-window "*Zettelkasten: Collection members")
+      (erase-buffer)
+      (insert (format "#+TITLE: %s\n\n" title))
+      (dolist (member members)
+        (insert (format "- %-100s %s\n"
+                        (format "[[zk:%s][%s]]" (car member) (cadr member))
+                        (nth 2 member))))
+      (org-mode))))
+
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
