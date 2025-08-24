@@ -1580,6 +1580,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
   (goto-char (point-min))
   (org-mode))
 
+;;;###autoload
 (defun zettelkasten-list-collection-members ()
   (interactive)
   (let* ((zkid (zettelkasten--get-zkid-at-point))
@@ -1596,7 +1597,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
                     :on (= n:zkid e:object)
                     :and (= e:subject $s1)
                     :and (= e:predicate "prov:hadMember")
-                    :inner-join v_edges_union e2
+                    :left-join v_edges_union e2
                     :on (and (= e:object e2:subject)
                              (= e2:predicate "prov:generatedAtTime"))
                     :order-by [(desc e2:object)]
