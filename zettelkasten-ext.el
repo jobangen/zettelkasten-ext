@@ -993,18 +993,18 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
        (concat (format-time-string "%Y-%m-%dT%H:%M:%S+")
                (job/current-timezone-offset-hours))))
     ;; Mitschrift
-    (when (member created-type '("zkt:Task"))
+    (when (member created-type '("zkt:Mitschrift"))
       (zettelkasten-heading-set-relation-to-context
        "zktb:wasAuthoredBy" "@me")
       (org-schedule nil))
     ;; Task
     (when (member created-type '("zkt:Task"))
       (org-todo "TODO")
+      (zettelkasten-heading-set-relation-to-context
+       "zkt:hadAdressat" "@me")
       (when (y-or-n-p "Link to activity? ")
         (zettelkasten-heading-set-relation-to-context
          "prov:wasGeneratedBy"))
-      (zettelkasten-heading-set-relation-to-context
-       "zkt:hadAdressat" "@me")
       (org-set-tags-command))))
 
 (defun zettelkasten--get-predicates-by-range (subject-types)
