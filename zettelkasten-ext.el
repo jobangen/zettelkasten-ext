@@ -1478,31 +1478,30 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
         (insert (format " [[zk:%s][%s]]\n" (cadr task) (car task))))
       (org-mode))))
 
-(defun zettelkasten-get-folgezettel (zettel-id)
-  (cl-remove-if-not
-   (lambda (x) (null (caddr x)))
-   (zettelkasten-db-query
-    [:select :distinct [n:title n:zkid]
-     :from nodes n
-     :inner-join v_edges_union e
-     :on (= n:zkid e:object)
-     :and (= e:subject $s1)
-     :and (= e:predicate "zkt:followedBy")
-     ]
-    zettel-id)))
-
-(defun zettelkasten-get-branches (zettel-id)
-  (cl-remove-if-not
-   (lambda (x) (null (caddr x)))
-   (zettelkasten-db-query
-    [:select :distinct [n:title n:zkid]
-     :from nodes n
-     :inner-join v_edges_union e
-     :on (= n:zkid e:object)
-     :and (= e:subject  $s1)
-     :and (= e:predicate "zkt:hasBranch")
-     ]
-    zettel-id)))
+(defun zettelkasten--get-children (zkid property &optional order-property)
+  (if order-property
+      (zettelkasten-db-query
+       [:select :distinct [n:zkid n:title e2:object]
+        :from nodes n
+        :inner-join v_edges_union e
+        :on (= n:zkid e:object)
+        :and (= e:subject $s1)
+        :and (= e:predicate $s2)
+        :left-join v_edges_union e2
+        :on (and (= e:object e2:subject)
+                 (= e2:predicate $s3))
+        :order-by [(desc e2:object)]
+        ]
+       zkid property order-property)
+    (zettelkasten-db-query
+     [:select :distinct [n:zkid n:title]
+      :from nodes n
+      :inner-join v_edges_union e
+      :on (= n:zkid e:object)
+      :and (= e:subject $s1)
+      :and (= e:predicate $s2)
+      ]
+     zkid property)))
 
 (defun increment-letter (letter)
   "Increment a letter, wrapping from z to a."
@@ -1515,30 +1514,29 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 
 (defun zettelkasten-insert-zettel-children (parent-signature
                                             folgecounter-in
-                                            zettel-id
+                                            zkid
                                             &optional max-level level)
   ;; Branches
   (unless (and max-level level
                (= max-level level))
-    (let* ((branches (zettelkasten-get-branches zettel-id))
+    (let* ((branches (zettelkasten--get-children zkid "zkt:hasBranch"))
            (branchcounter "a")
            (current-level (+ level 1)))
       (dolist (branchzettel branches)
         (let ((signature (format "%s%s%s" parent-signature folgecounter-in branchcounter)))
-          (insert (format "  - %s [[zk:%s][%s]]\n" signature (cadr branchzettel) (car branchzettel)))
+          (insert (format "  - %s [[zk:%s][%s]]\n" signature (car branchzettel) (cadr branchzettel)))
           (setq branchcounter (increment-letter branchcounter))
-          (zettelkasten-insert-zettel-children signature 0 (cadr branchzettel) max-level current-level)))))
-
+          (zettelkasten-insert-zettel-children signature 0 (car branchzettel) max-level current-level)))))
 
   ;; Folgezettel
-  (let ((current-zettel zettel-id)
+  (let ((current-zkid zkid)
         (folgecounter (or folgecounter-in 0)))
-    (let ((folgezettel (car (zettelkasten-get-folgezettel current-zettel)))
+    (let ((folgezettel (car (zettelkasten--get-children current-zkid "zkt:followedBy")))
           (signature (format "%2s%d" parent-signature folgecounter)))
       (when (car folgezettel)
         (setq folgecounter (1+ folgecounter))
-        (insert (format "  - %s [[zk:%s][%s]]\n" (format "%2s%d" parent-signature folgecounter) (cadr folgezettel) (car folgezettel)))
-        (zettelkasten-insert-zettel-children parent-signature folgecounter (cadr folgezettel) max-level level))
+        (insert (format "  - %s [[zk:%s][%s]]\n" (format "%2s%d" parent-signature folgecounter) (car folgezettel) (cadr folgezettel)))
+        (zettelkasten-insert-zettel-children parent-signature folgecounter (car folgezettel) max-level level))
       (setq current-zettel (cadr folgezettel)))))
 
 (defun zettelkasten-get-top-zettel (&optional zettel-id max-level)
@@ -1590,19 +1588,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
                         :where (= zkid $s1)
                         ]
                        zkid)))
-         (members (zettelkasten-db-query
-                   [:select :distinct [n:zkid n:title e2:object]
-                    :from nodes n
-                    :inner-join v_edges_union e
-                    :on (= n:zkid e:object)
-                    :and (= e:subject $s1)
-                    :and (= e:predicate "prov:hadMember")
-                    :left-join v_edges_union e2
-                    :on (and (= e:object e2:subject)
-                             (= e2:predicate "prov:generatedAtTime"))
-                    :order-by [(desc e2:object)]
-                    ]
-                   zkid)))
+         (members (zettelkasten--get-children zkid "prov:hadMember" "prov:generatedAtTime")))
     (when title
       (switch-to-buffer-other-window "*Zettelkasten: Collection members")
       (erase-buffer)
@@ -1612,6 +1598,36 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
                         (format "[[zk:%s][%s]]" (car member) (cadr member))
                         (nth 2 member))))
       (org-mode))))
+
+
+(defun zettelkasten--insert-activities-rec (zkid property add-order-prop level)
+  (let ((children (zettelkasten--get-children zkid property add-order-prop))
+        (level-indent 2))
+    (dolist (child children)
+      (insert (format "%s- %s (%s)\n"
+                      (make-string (* level-indent level) ?\s)
+                      (format "[[zk:%s][%s]]" (car child) (cadr child))
+                      (if (caddr child)
+                          (car (split-string (caddr child) "T"))
+                        "")))
+      (zettelkasten--insert-activities-rec (car child) property add-order-prop (+ level 1)))))
+
+;;;###autoload
+(defun zettelkasten-list-child-activities ()
+  (let* ((zkid (zettelkasten--get-zkid-at-point))
+         (title (caar (zettelkasten-db-query
+                       [:select :distinct [title]
+                        :from nodes
+                        :where (= zkid $s1)
+                        ]
+                       zkid))))
+    (switch-to-buffer-other-window "*Zettelkasten: Activities")
+    (erase-buffer)
+    (insert (format "#+TITLE: %s\n\n" title))
+    (zettelkasten--insert-activities-rec zkid "dct:hasPart" "prov:startedAtTime" 0)
+    (org-mode)))
+
+
 
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
