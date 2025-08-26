@@ -392,7 +392,7 @@ Add row to capture db for feed."
       (insert (format-time-string ":END:\n"))
       (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:year::%Y][%Y]]-[[zk:dtd-%Y-%m-%d::time:month::%m][%m]]-[[zk:dtd-%Y-%m-%d::time:day::%d][%d]]\n"))
       (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:week::%W][W%W]]\n"))
-      (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:week::%A][%A]]\n")))))
+      (insert (format-time-string "- [[zk:dtd-%Y-%m-%d::time:dayOfWeek::%A][%A]]\n")))))
 
 ;;;###autoload
 (defun zettelkasten-ext-journal-daily-journal ()
