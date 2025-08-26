@@ -1614,6 +1614,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 
 ;;;###autoload
 (defun zettelkasten-list-child-activities ()
+  (interactive)
   (let* ((zkid (zettelkasten--get-zkid-at-point))
          (title (caar (zettelkasten-db-query
                        [:select :distinct [title]
