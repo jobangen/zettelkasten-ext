@@ -403,7 +403,7 @@ Add row to capture db for feed."
   (unless (search-forward "** Journal" nil t)
     (progn
       (search-forward ":RDF_TYPE: time:DateTimeDescription")
-      (outline-next-heading)
+      (outline-next-heading)
       (open-line 1)
       (insert (format-time-string "** Journal %Y-%m-%d"))
       (org-set-property "CUSTOM_ID" (format-time-string "%Y-%m-%dT%H%M%S.%1N"))
@@ -1337,7 +1337,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
          (linex -5)
          (liney ycenter)
          (line `((-5 . ,ycenter))))
-    
+
     (dolist (d data)
       (let ((green (* factor (car d)))
             (red (* factor (cadr d))))
@@ -1346,8 +1346,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
         (setq xpos (+ xpos (+ width xspace)))
         (setq linex (+ linex (+ width xspace)))
         (setq liney (- liney (- (car d) (cadr d))))
-        (add-to-list 'line `(,linex . ,liney) t)
-        ))
+        (add-to-list 'line `(,linex . ,liney) t)))
     (svg-polyline svg line :stroke-width 2 :stroke "darkblue" :fill "transparent")
 
     (svg-line svg 0 ycenter (- svgwidth 80) ycenter :id "line1" :stroke "black")
@@ -1371,11 +1370,11 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
               :x (- svgwidth 60)
               :y (+ ycenter (* ycenter 0.05))
               :stroke-width 1)
-    (format "%s" (svg-insert-image svg))))
+    (svg-insert-image svg)))
 
 ;;;###autoload
-(defun zettelkasten-task-overview-plot ()
-  "Count tasks ad invalidated."
+(defun zettelkasten-task-overview-data ()
+  "Count active tasks and invalidated tasks."
   (interactive)
   (let* ((tasks
           (zettelkasten-db-query
@@ -1446,7 +1445,19 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
                                   (cadr (cadr arg)))
                                 combined)))
            (taskcount (- activetasks invaltasks)))
-      (zettelkasten-plot-data tail todaytask todayinval taskcount))))
+      `(,tail ,todaytask ,todayinval ,taskcount))))
+
+
+(defun zettelkasten-task-overview-wrapper ()
+  (interactive)
+  (let* ((data (zettelkasten-task-overview-data))
+         (tail (car data))
+         (todaytask (nth 1 data))
+         (todayinval (nth 2 data))
+         (taskcount (nth 3 data))
+         (plot (zettelkasten-plot-data tail todaytask todayinval taskcount)))
+    ()))
+
 
 ;;;###autoload
 (defun zettelkasten-task-finished-last-days ()
