@@ -1233,10 +1233,11 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
            (or (org-entry-get nil "COLLECTION") "")))
          (add
           (ivy-read "Collection [Headline]: " (zettelkasten--get-collections)))
-         (join
+         (combined
           (sort (append current (list add)) 'string<))
+         (unique (delete-dups combined))
          (string
-          (mapconcat 'identity join " ")))
+          (mapconcat 'identity unique " ")))
     (org-set-property "COLLECTION" string))
   (zettelkasten-headline-add-collection))
 
