@@ -1448,6 +1448,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
       `(,tail ,todaytask ,todayinval ,taskcount))))
 
 
+;;;###autoload
 (defun zettelkasten-task-overview-wrapper ()
   (interactive)
   (let* ((data (zettelkasten-task-overview-data))
@@ -1455,8 +1456,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
          (todaytask (nth 1 data))
          (todayinval (nth 2 data))
          (taskcount (nth 3 data))
-         (plot (zettelkasten-plot-data tail todaytask todayinval taskcount)))
-    ()))
+         (plot (zettelkasten-plot-data tail todaytask todayinval taskcount)))))
 
 
 ;;;###autoload
