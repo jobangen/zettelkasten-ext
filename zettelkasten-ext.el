@@ -1640,7 +1640,56 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
     (zettelkasten--insert-activities-rec zkid "dct:hasPart" "prov:startedAtTime" 0)
     (org-mode)))
 
+(defun zettelkasten--get-filename-for-id (zkid)
+  (caar (zettelkasten-db-query
+         [:select [filename]
+          :from nodes
+          :where (= zkid $s1)]
+         zkid)))
 
+(defun zettelkasten--get-headline-for-id (zkid)
+  (caar (zettelkasten-db-query
+         [:select [title]
+          :from nodes
+          :where (= zkid $s1)]
+         zkid)))
+
+(defun get-custom-id-position (file custom-id)
+  (with-current-buffer (find-file-noselect file)
+    (org-element-map (org-element-parse-buffer) 'headline
+      (lambda (hl)
+        (when (string= (org-element-property :CUSTOM_ID hl) custom-id)
+          (org-element-property :begin hl)))
+      nil t)))
+
+(defun zettelkasten--refile-to-zkid (zkid)
+  (let* ((filename (zettelkasten--get-filename-for-id zkid))
+         (headline (zettelkasten--get-headline-for-id zkid))
+         (pos (get-custom-id-position filename zkid)))
+    (org-refile nil nil (list headline filename nil pos))
+    t))
+
+;;;###autoload
+(defun zettelkasten-refile-to-collection ()
+  (interactive)
+  (let ((collection-prop (assoc "COLLECTION" (org-entry-properties))))
+    (if collection-prop
+        (let ((collection-zkids (split-string (cdr collection-prop))))
+          (if (= (length collection-zkids) 1)
+              (zettelkasten--refile-to-zkid (car collection-zkids))
+            (message "None or more than one collection")
+            nil))
+      nil)))
+
+;;;###autoload
+(defun zettelkasten-refile-all-headings-to-collection ()
+  (interactive)
+  (if (zettelkasten-refile-to-collection)
+      (zettelkasten-refile-all-headings-to-collection)
+    (let ((point-start (point)))
+      (org-forward-heading-same-level 1)
+      (unless (= point-start (point))
+        (zettelkasten-refile-all-headings-to-collection)))))
 
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
