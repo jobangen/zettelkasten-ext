@@ -1694,6 +1694,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 
 ;;;###autoload
 (defun zettelkasten-rename-descriptor ()
+  "Rename descriptor using rg."
   (interactive)
   (let* ((default-old (when (use-region-p)
                         (buffer-substring-no-properties
