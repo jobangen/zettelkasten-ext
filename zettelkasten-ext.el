@@ -1684,6 +1684,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 
 ;;;###autoload
 (defun zettelkasten-refile-all-headings-to-collection ()
+  "Refile headings on same level to their respective collection."
   (interactive)
   (if (zettelkasten-refile-to-collection)
       (zettelkasten-refile-all-headings-to-collection)
