@@ -26,6 +26,7 @@
 ;;; Code:
 (require 'zettelkasten)
 (require 'hydra)
+(require 'rg)
 
 ;;; begin: Context filter: defunct right now
 (defcustom zettelkasten-context-filter-list '()
@@ -1690,6 +1691,29 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
       (org-forward-heading-same-level 1)
       (unless (= point-start (point))
         (zettelkasten-refile-all-headings-to-collection)))))
+
+;;;###autoload
+(defun zettelkasten-rename-descriptor ()
+  (interactive)
+  (let* ((default-old (when (use-region-p)
+                        (buffer-substring-no-properties
+                         (region-beginning) (region-end))))
+         (descriptor-old
+          (completing-read
+           "Old descriptor: "
+           (zettelkasten--get-all-descriptor-candidates) nil t default-old))
+         (descriptor-new
+          (completing-read
+           "New descriptor: "
+           (zettelkasten--get-all-descriptor-candidates) nil nil descriptor-old)))
+    (rg
+     (format "DESCRIPTOR:.*%s" descriptor-old)
+     "*"
+     zettelkasten-zettel-directory)
+    (switch-to-buffer-other-window "*rg*")
+    (sleep-for 3)
+    (wgrep-change-to-wgrep-mode)
+    (query-replace descriptor-old descriptor-new t)))
 
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
