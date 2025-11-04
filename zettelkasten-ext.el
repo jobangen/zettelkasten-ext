@@ -1071,7 +1071,7 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 
   ("p" zettelkasten-capture-push "Push Link" :column "Zettelkasten")
   ("P" (zettelkasten-capture-push t) "Push Heading")
-  ("D" zettelkasten-replace-descriptor "Replace Desc.")
+  ("D" zettelkasten-rename-descriptor "Descriptor: rename")
   ;; ("I" zettelkasten-info "Info")
 
   ("c" zettelkasten-zettel-add-collection "Add collection" :column "Zettel")
@@ -1716,6 +1716,45 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
     (sleep-for 3)
     (wgrep-change-to-wgrep-mode)
     (query-replace descriptor-old descriptor-new t)))
+
+;;;###autoload
+(defun zettelkasten-list-all-unique-tag-chains ()
+  (interactive)
+  (let* ((descriptors
+          (zettelkasten-db-query
+           [:select [object (funcall count object)]
+            :from edges
+            :where (in predicate $v1)
+            :group-by object
+            ]
+           (zettelkasten-predicate-hierachy
+            zettelkasten-subject-predicate)))
+         (ids-tags
+          (-flatten (append
+           (zettelkasten-db-query
+           [:select [zkid]
+            :from nodes])
+           (zettelkasten-db-query
+            [:select [tag]
+             :from tags
+             ]))))
+         (count (length descriptors))
+         (sorted (seq-sort
+                  (lambda (a b) (> (cadr a) (cadr b)))
+                  descriptors))
+         )
+    (switch-to-buffer-other-window "*Zettelkasten tags*")
+    (erase-buffer)
+    (insert (format "#+title: Zettel tags (%s)\n\n" count))
+    (dolist (descriptor sorted)
+      (if (member (car descriptor) ids-tags)
+          (insert (format "- *%s* %s\n" (car descriptor) (cadr descriptor)))
+        (insert (format "- %s %s\n" (car descriptor) (cadr descriptor)))
+        )
+      )
+    (goto-char (point-min))
+    (org-mode)
+))
 
 (provide 'zettelkasten-ext)
 ;;; zettelkasten.el ends here
