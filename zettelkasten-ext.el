@@ -389,7 +389,7 @@ Add row to capture db for feed."
   (unless (search-forward "** Journal" nil t)
     (progn
       (search-forward ":RDF_TYPE: time:DateTimeDescription")
-      (outline-next-heading)
+      (outline-next-heading)
       (open-line 1)
       (insert (format-time-string "** Journal %Y-%m-%d"))
       (org-set-property "CUSTOM_ID" (format-time-string "%Y-%m-%dT%H%M%S.%1N"))
@@ -1656,6 +1656,36 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
     t))
 
 ;;;###autoload
+(defun zettelkasten-archive-finished-task ()
+  (interactive)
+  (if (org-entry-is-done-p)
+      (progn
+        (org-archive-subtree)
+        (message "Subtree archived")
+        (redisplay)
+        t)
+    (message "Subtree not archived")
+    (redisplay)
+    nil))
+
+;;;###autoload
+(defun zettelkasten-archive-all-finished-tasks ()
+  (interactive)
+  (let ((zettelkasten--skip-db-update t))
+    (zettelkasten--archive-all-finished-tasks-recursive))
+  (zettelkasten-db-update
+   (buffer-file-name)
+   (secure-hash 'sha1 (current-buffer))))
+
+(defun zettelkasten--archive-all-finished-tasks-recursive ()
+  (if (zettelkasten-archive-finished-task)
+      (zettelkasten--archive-all-finished-tasks-recursive)
+      (let ((point-start (point)))
+        (org-forward-heading-same-level 1)
+        (unless (= point-start (point))
+          (zettelkasten--archive-all-finished-tasks-recursive)))))
+
+;;;###autoload
 (defun zettelkasten-refile-to-collection ()
   (interactive)
   (let ((collection-prop (assoc "COLLECTION" (org-entry-properties))))
@@ -1671,12 +1701,19 @@ Turning on this mode runs the hook `zettelkasten-capture-mode-hook'."
 (defun zettelkasten-refile-all-headings-to-collection ()
   "Refile headings on same level to their respective collection."
   (interactive)
+  (let ((zettelkasten--skip-db-update t))
+    (zettelkasten--refile-all-headings-to-collection-recursive))
+  (zettelkasten-db-update
+   (buffer-file-name)
+   (zettelkasten-get-file-hash (buffer-file-name))))
+
+(defun zettelkasten--refile-all-headings-to-collection-recursive ()
   (if (zettelkasten-refile-to-collection)
-      (zettelkasten-refile-all-headings-to-collection)
+      (zettelkasten--refile-all-headings-to-collection-recursive)
     (let ((point-start (point)))
       (org-forward-heading-same-level 1)
       (unless (= point-start (point))
-        (zettelkasten-refile-all-headings-to-collection)))))
+        (zettelkasten--refile-all-headings-to-collection-recursive)))))
 
 ;;;###autoload
 (defun zettelkasten-rename-descriptor ()
